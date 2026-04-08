@@ -33,5 +33,9 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     });
         });
+        findViewById(R.id.signuppass).setOnClickListener(v ->{
+            Intent intent = new Intent(this, SignUpActivity.class );
+            startActivity(intent);
+        });
     }
 }
