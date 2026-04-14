@@ -59,6 +59,7 @@
             android:text="Dont have an account yet? Sign Up"></Button>
 
         <Button
+            android:id="@+id/guestBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Continue as Guest"></Button>
