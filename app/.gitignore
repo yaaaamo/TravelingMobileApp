@@ -1,2 +1,13 @@
-/build
-google-services.json
+# Gradle
+.gradle/
+build/
+
+# Local config (contains your SDK path)
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+
+# OS files
+.DS_Store
