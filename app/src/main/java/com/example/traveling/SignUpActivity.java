@@ -7,15 +7,22 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class SignUpActivity extends AppCompatActivity {
+
+    private static final String TAG = "SignUpActivity";
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -37,67 +44,39 @@ public class SignUpActivity extends AppCompatActivity {
         Button registerBtn = findViewById(R.id.submit);
 
         registerBtn.setOnClickListener(v -> {
-
-            String fullName = fullnameField.getText().toString().trim();
+            String fullname = fullnameField.getText().toString().trim();
             String email = emailField.getText().toString().trim();
             String password = passwordField.getText().toString().trim();
 
-            // ✅ Validation
-            if (fullName.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            // Basic validation
+            if (fullname.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Please fill in all fields.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            Log.d("SIGNUP", "Button clicked");
+            if (password.length() < 6) {
+                Toast.makeText(this, "Password must be at least 6 characters.", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            // 🔐 STEP 1: Firebase Auth
             mAuth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this, task -> {
+                    .addOnCompleteListener(this, task ->  {
+                            if (task.isSuccessful()) {
+                                FirebaseUser user = mAuth.getCurrentUser();
+                                Log.d("SIGNUP", "createUserWithEmail:success");
 
-                        Log.d("SIGNUP", "Auth callback triggered");
-
-                        if (task.isSuccessful()) {
-
-                            String uid = mAuth.getCurrentUser().getUid();
-
-                            // 👤 STEP 2: Firestore user data
-                            Map<String, Object> user = new HashMap<>();
-                            user.put("full_name", fullName);
-                            user.put("email", email);
-
-                            db.collection("users")
-                                    .document(uid)
-                                    .set(user)
-                                    .addOnSuccessListener(unused -> {
-
-                                        Log.d("SIGNUP", "Firestore success");
-
-                                        Toast.makeText(SignUpActivity.this,
-                                                "Account created!",
-                                                Toast.LENGTH_SHORT).show();
-
-                                        Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
-                                        startActivity(intent);
-                                        finish();
-                                    })
-                                    .addOnFailureListener(e -> {
-
-                                        Log.e("SIGNUP", "Firestore error", e);
-
-                                        Toast.makeText(SignUpActivity.this,
-                                                "Firestore error: " + e.getMessage(),
-                                                Toast.LENGTH_LONG).show();
-                                    });
-
-                        } else {
-
-                            Log.e("SIGNUP", "Auth failed", task.getException());
-
-                            Toast.makeText(SignUpActivity.this,
-                                    "Sign up failed: " +
-                                            (task.getException() != null ? task.getException().getMessage() : "unknown error"),
-                                    Toast.LENGTH_LONG).show();
-                        }
+                                Map<String, Object> userData = new HashMap<>();
+                                userData.put("fullname", fullname);
+                                userData.put("email", email);
+                                Intent intent = new Intent(this, MainActivity.class);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                Log.w("SINGUP", "createUserWithEmail:failure", task.getException());
+                                Toast.makeText(SignUpActivity.this,
+                                        "Registration failed: " + task.getException().getMessage(),
+                                        Toast.LENGTH_LONG).show();
+                            }
                     });
         });
     }
