@@ -28,13 +28,13 @@ public class MainActivity extends AppCompatActivity {
 
     private FirebaseAnalytics analytics;
 
-    private final ActivityResultLauncher<String> pickImageLauncher =
-            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-                if (uri != null) {
-                    selectedImageUri = uri;
-                    imageView.setImageURI(uri);
-                }
-            });
+//    private final ActivityResultLauncher<String> pickImageLauncher =
+//            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+//                if (uri != null) {
+//                    selectedImageUri = uri;
+//                    imageView.setImageURI(uri);
+//                }
+//            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,19 +44,16 @@ public class MainActivity extends AppCompatActivity {
 
         analytics = FirebaseAnalytics.getInstance(this);
 
-        imageView = findViewById(R.id.imageView);
-        pickBtn = findViewById(R.id.pickBtn);
-        uploadBtn = findViewById(R.id.uploadBtn);
 
-        pickBtn.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+        //pickBtn.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
 
-        uploadBtn.setOnClickListener(v -> {
-            if (selectedImageUri != null) {
-                storageService.uploadFile(selectedImageUri);
-            } else {
-                Toast.makeText(this, "Pick an image first", Toast.LENGTH_SHORT).show();
-            }
-        });
+//        uploadBtn.setOnClickListener(v -> {
+//            if (selectedImageUri != null) {
+//                storageService.uploadFile(selectedImageUri);
+//            } else {
+//                Toast.makeText(this, "Pick an image first", Toast.LENGTH_SHORT).show();
+//            }
+//        });
 
         if (FirebaseApp.getInstance() != null) {
             Log.d("Firebase", "Firebase is connected!");
