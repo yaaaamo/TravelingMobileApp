@@ -59,16 +59,13 @@ public class MainActivity extends AppCompatActivity {
             Log.d("Firebase", "Firebase is connected!");
         }
 
-        /*FirebaseAuth.getInstance().addAuthStateListener(auth -> {
-            FirebaseUser user = auth.getCurrentUser();
-            if (user != null) {
-                Log.d("Auth", "Signed in: " + user.getEmail());
-                navigateToHome();
-            } else {
-                navigateToLogin();
-            }
-        });*/
-    
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
 
         BottomNavigationView bot = findViewById(R.id.bottomNavigationView);
         bot.setOnNavigationItemSelectedListener(item -> {
