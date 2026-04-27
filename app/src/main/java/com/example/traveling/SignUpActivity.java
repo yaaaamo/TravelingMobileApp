@@ -64,10 +64,19 @@ public class SignUpActivity extends AppCompatActivity {
                             if (task.isSuccessful()) {
                                 FirebaseUser user = mAuth.getCurrentUser();
                                 Log.d("SIGNUP", "createUserWithEmail:success");
+                                if(user!= null) {
+                                    String uid = user.getUid();
+                                    Map<String, Object> userData = new HashMap<>();
+                                    userData.put("fullname", fullname);
+                                    userData.put("email", email);
+                                    userData.put("uid", uid);
+                                    db.collection("Users").document(uid)
+                                            .set(userData)
+                                            .addOnSuccessListener(unused -> {
+                                                        Log.d(TAG, "User data saved successfully");
 
-                                Map<String, Object> userData = new HashMap<>();
-                                userData.put("fullname", fullname);
-                                userData.put("email", email);
+                                                    });
+                                }
                                 Intent intent = new Intent(this, MainActivity.class);
                                 startActivity(intent);
                                 finish();
