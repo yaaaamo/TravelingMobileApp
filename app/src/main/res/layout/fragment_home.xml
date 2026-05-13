@@ -11,6 +11,24 @@
     android:orientation="vertical">
     <!-- TODO: Update blank fragment layout -->
 
+<<<<<<< Updated upstream
+=======
+    <!-- Main content -->
+    <LinearLayout
+        android:layout_width="236dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/postrecyclerview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </LinearLayout>
+
+    <!-- Floating "Add Photo" button -->
+>>>>>>> Stashed changes
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
