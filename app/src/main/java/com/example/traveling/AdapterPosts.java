@@ -1,6 +1,7 @@
 package com.example.traveling;
 
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,6 +44,15 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHold
         Glide.with(holder.itemView.getContext())
                 .load(post.getImageUrl())
                 .into(holder.image);
+        holder.itemView.setOnClickListener(v -> {
+
+            Intent intent = new Intent(v.getContext(), PostDetailsActivity.class);
+
+            intent.putExtra("caption", post.getCaption());
+            intent.putExtra("imageUrl", post.getImageUrl());
+
+            v.getContext().startActivity(intent);
+        });
     }
 
     @Override

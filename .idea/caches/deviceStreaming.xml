@@ -64,8 +64,6 @@
           <option name="screenY" value="2400" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
-<<<<<<< Updated upstream
-=======
           <option name="api" value="34" />
           <option name="brand" value="OPPO" />
           <option name="codename" value="OP5759L1" />
@@ -102,7 +100,6 @@
           <option name="screenY" value="1600" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
->>>>>>> Stashed changes
           <option name="api" value="36" />
           <option name="brand" value="samsung" />
           <option name="codename" value="SC-53C" />
@@ -710,18 +707,6 @@
           <option name="screenY" value="2340" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
-          <option name="api" value="36" />
-          <option name="brand" value="samsung" />
-          <option name="codename" value="dm1qcsx" />
-          <option name="id" value="dm1qcsx" />
-          <option name="labId" value="google" />
-          <option name="manufacturer" value="Samsung" />
-          <option name="name" value="Galaxy S23" />
-          <option name="screenDensity" value="480" />
-          <option name="screenX" value="1080" />
-          <option name="screenY" value="2340" />
-        </PersistentDeviceSelectionData>
-        <PersistentDeviceSelectionData>
           <option name="api" value="34" />
           <option name="brand" value="samsung" />
           <option name="codename" value="dm2q" />
@@ -1102,8 +1087,6 @@
           <option name="screenY" value="2560" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
-<<<<<<< Updated upstream
-=======
           <option name="api" value="30" />
           <option name="brand" value="motorola" />
           <option name="codename" value="guamna" />
@@ -1128,7 +1111,6 @@
           <option name="screenY" value="1600" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
->>>>>>> Stashed changes
           <option name="api" value="34" />
           <option name="brand" value="google" />
           <option name="codename" value="husky" />
@@ -1759,14 +1741,6 @@
           <option name="screenDensity" value="420" />
           <option name="screenX" value="1080" />
           <option name="screenY" value="2424" />
-<<<<<<< Updated upstream
-          <option name="tags">
-            <list>
-              <option value="dda-default" />
-            </list>
-          </option>
-=======
->>>>>>> Stashed changes
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
           <option name="api" value="34" />

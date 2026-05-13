@@ -49,4 +49,6 @@ public class ModelPost {
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
+
+
 }
