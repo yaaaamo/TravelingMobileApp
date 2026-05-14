@@ -101,13 +101,10 @@ public class RouteGenerator {
     }
 
     private List<Place> buildRoute(List<Place> places, double targetBudget, String mode, int maxPlaces, List<Place> requiredPlaces) {
-        android.util.Log.d("RouteGenerator",
-                "Mode: " + mode + ", maxPlaces: " + maxPlaces +
-                        ", candidates: " + places.size() + ", budget: " + targetBudget);
-
         List<Place> selected = new ArrayList<>();
         Set<String> usedCategories = new HashSet<>();
         double total = 0;
+
 
         for (Place required : requiredPlaces) {
             if (selected.size() >= maxPlaces) break;
@@ -117,18 +114,28 @@ public class RouteGenerator {
         }
 
         List<Place> candidates = new ArrayList<>(places);
-        candidates.sort((a, b) -> Double.compare(score(b, mode), score(a, mode)));
+
+        switch (mode) {
+            case "eco":
+                candidates.sort((a, b) -> Double.compare(a.getPrice(), b.getPrice()));
+                break;
+            case "balanced":
+                double targetPerPlace = targetBudget / maxPlaces;
+                candidates.sort((a, b) -> Double.compare(
+                        Math.abs(a.getPrice() - targetPerPlace),
+                        Math.abs(b.getPrice() - targetPerPlace)
+                ));
+                break;
+            case "comfort":
+                candidates.sort((a, b) -> Double.compare(b.getPrice(), a.getPrice()));
+                break;
+        }
+
 
         for (Place place : candidates) {
             if (selected.size() >= maxPlaces) break;
-
             if (total + place.getPrice() > targetBudget) continue;
-
-            if (usedCategories.contains(place.getCategory())
-                    && selected.size() < (maxPlaces - 1)) {
-                continue;
-            }
-
+            if (usedCategories.contains(place.getCategory()) && selected.size() < (maxPlaces - 1)) continue;
             selected.add(place);
             usedCategories.add(place.getCategory());
             total += place.getPrice();
@@ -138,16 +145,11 @@ public class RouteGenerator {
             if (selected.size() >= maxPlaces) break;
             if (selected.contains(place)) continue;
             if (total + place.getPrice() > targetBudget) continue;
-
             selected.add(place);
             total += place.getPrice();
         }
-        android.util.Log.d("RouteGenerator",
-                "Mode: " + mode + " → selected: " + selected.size() +
-                        ", totalCost: " + total);
 
         return selected;
-
     }
 
     private double score(Place place, String mode) {
