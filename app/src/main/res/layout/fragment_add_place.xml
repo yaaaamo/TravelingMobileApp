@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Yer Ekle"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <EditText
+            android:id="@+id/edit_place_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Yer adı (örn: Louvre Museum)"
+            android:inputType="text"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btn_search_place"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ara"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/text_found_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Kategori"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spinner_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fiyat (€)"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/edit_place_price"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Örn: 25"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Efor Seviyesi (1-3)"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spinner_effort_place"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hava Durumu Uyumu"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <CheckBox
+            android:id="@+id/check_place_cold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Soğuk hava için uygun" />
+
+        <CheckBox
+            android:id="@+id/check_place_heat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sıcak hava için uygun" />
+
+        <CheckBox
+            android:id="@+id/check_place_rain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Yağmurlu hava için uygun"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/btn_save_place"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Firestore'a Kaydet"
+            android:layout_marginBottom="16dp" />
+
+        <ProgressBar
+            android:id="@+id/progress_add_place"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</ScrollView>

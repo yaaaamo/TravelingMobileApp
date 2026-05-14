@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -14,9 +15,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
+
+import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -73,9 +74,41 @@ public class RouteDetail extends Fragment {
         description.setText(generateDescription(selectedOption));
 
         // Timeline RecyclerView
-        RecyclerView recyclerView = view.findViewById(R.id.recycler_timeline);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        recyclerView.setAdapter(new TimelineAdapter(selectedOption.getPlaces()));
+        LinearLayout timelineContainer = view.findViewById(R.id.timeline_container);
+
+
+        String[] TIME_LABELS = {"MORNING", "LUNCH", "AFTERNOON", "EVENING", "NIGHT"};
+        String[] TIMES = {"09:00 AM", "12:30 PM", "03:00 PM", "06:00 PM", "08:30 PM"};
+        String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
+
+        List<Place> places = selectedOption.getPlaces();
+        for (int i = 0; i < places.size(); i++) {
+            Place place = places.get(i);
+            View itemView = inflater.inflate(R.layout.item_timeline_place, timelineContainer, false);
+
+            TextView timeLabel = itemView.findViewById(R.id.text_time_label);
+            TextView time = itemView.findViewById(R.id.text_time);
+            TextView name = itemView.findViewById(R.id.text_place_name);
+            TextView placeDescription = itemView.findViewById(R.id.text_place_description);
+            placeDescription.setText(getGenericDescription(place));
+            ImageView image = itemView.findViewById(R.id.image_place);
+
+            int labelIndex = Math.min(i, TIME_LABELS.length - 1);
+            timeLabel.setText(TIME_LABELS[labelIndex]);
+            time.setText(TIMES[labelIndex]);
+            name.setText(place.getName());
+            description.setText(getGenericDescription(place));
+
+            if (place.getPhotoReference() != null && !place.getPhotoReference().isEmpty()) {
+                String photoUrl = "https://maps.googleapis.com/maps/api/place/photo"
+                        + "?maxwidth=800"
+                        + "&photo_reference=" + place.getPhotoReference()
+                        + "&key=" + API_KEY;
+                Glide.with(requireContext()).load(photoUrl).centerCrop().into(image);
+            }
+
+            timelineContainer.addView(itemView);
+        }
 
         // MINI MAP
         setupMiniMap(selectedOption);
@@ -176,5 +209,16 @@ public class RouteDetail extends Fragment {
     private String generateDescription(RouteOption option) {
         return "A curated journey through " + option.getPlaces().size()
                 + " unique places, balancing culture, taste, and discovery.";
+    }
+
+    private String getGenericDescription(Place place) {
+        if (place.getCategory() == null) return "A noteworthy stop on your journey.";
+        switch (place.getCategory()) {
+            case "culture": return "A cultural landmark not to miss during your visit.";
+            case "restauration": return "A culinary stop to recharge and enjoy local flavors.";
+            case "loisirs": return "A relaxing spot to take a break and enjoy the atmosphere.";
+            case "decouvertes": return "An unexpected discovery waiting to be explored.";
+            default: return "A noteworthy stop on your journey.";
+        }
     }
 }

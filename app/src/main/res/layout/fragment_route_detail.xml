@@ -64,11 +64,11 @@
             android:layout_marginBottom="24dp" />
 
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_timeline"
+        <LinearLayout
+            android:id="@+id/timeline_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false" />
+            android:orientation="vertical" />
 
     </LinearLayout>
 </ScrollView>
