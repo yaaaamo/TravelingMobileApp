@@ -1,5 +1,7 @@
 package com.example.traveling;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -9,23 +11,36 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.List;
 
 public class TravelPath extends Fragment {
 
     private TravelPathViewModel viewModel;
+    private FusedLocationProviderClient fusedLocationClient;
+
+    private TextView textEco, textBalanced, textComfort;
+    private ProgressBar progressBar;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_travel_path, container, false);
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
 
         CheckBox checkRestauration = view.findViewById(R.id.check_restauration);
         CheckBox checkLoisirs = view.findViewById(R.id.check_loisirs);
@@ -44,36 +59,43 @@ public class TravelPath extends Fragment {
 
         Button btnSave = view.findViewById(R.id.btn_save_preferences);
 
-        TextView textEco = view.findViewById(R.id.text_option_eco);
-        TextView textBalanced = view.findViewById(R.id.text_option_balanced);
-        TextView textComfort = view.findViewById(R.id.text_option_comfort);
+        textEco = view.findViewById(R.id.text_option_eco);
+        textBalanced = view.findViewById(R.id.text_option_balanced);
+        textComfort = view.findViewById(R.id.text_option_comfort);
+        progressBar = view.findViewById(R.id.progress_bar);
 
-        viewModel = new ViewModelProvider(this).get(TravelPathViewModel.class);
+        viewModel = new ViewModelProvider(requireActivity()).get(TravelPathViewModel.class);
 
         String[] efforts = {"Faible", "Moyen", "Élevé"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 requireContext(),
-                android.R.layout.simple_spinner_item,
-                efforts
-        );
+                android.R.layout.simple_spinner_item, efforts);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerEffort.setAdapter(adapter);
 
         viewModel.getRouteOptions().observe(getViewLifecycleOwner(), options -> {
-            if (options == null || options.size() < 3) {
-                Toast.makeText(requireContext(), "Pas assez d'options trouvées.", Toast.LENGTH_SHORT).show();
+            if (options == null || options.isEmpty()) {
+                Toast.makeText(requireContext(),
+                        "Aucune option trouvée.",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            textEco.setText(formatOption(options.get(0)));
-            textBalanced.setText(formatOption(options.get(1)));
-            textComfort.setText(formatOption(options.get(2)));
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new RouteResults())
+                    .addToBackStack(null)
+                    .commit();
         });
 
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
             if (error != null) {
                 Toast.makeText(requireContext(), "Erreur: " + error, Toast.LENGTH_LONG).show();
             }
+        });
+
+        viewModel.getLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         });
 
         btnSave.setOnClickListener(v -> {
@@ -92,32 +114,63 @@ public class TravelPath extends Fragment {
             prefs.loisirs = checkLoisirs.isChecked();
             prefs.decouvertes = checkDecouvertes.isChecked();
             prefs.culture = checkCulture.isChecked();
-
             prefs.favoritePlaces = editPlaces.getText().toString().trim();
             prefs.maxBudget = Double.parseDouble(budgetText);
             prefs.duration = durationText;
             prefs.effort = spinnerEffort.getSelectedItem().toString();
-
             prefs.cold = checkCold.isChecked();
             prefs.heat = checkHeat.isChecked();
             prefs.rain = checkRain.isChecked();
 
-            viewModel.generateRoutes(prefs);
+            fetchLocationAndGenerate(prefs);
         });
 
         return view;
     }
 
+    private void fetchLocationAndGenerate(UserPreferences prefs) {
+        if (ContextCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(requireContext(),
+                    "Permission de localisation requise. Ouvrez la carte d'abord.",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+            if (location == null) {
+                Toast.makeText(requireContext(),
+                        "Position introuvable. Activez la localisation.",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+            LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+            viewModel.generateRoutes(prefs, userLocation, "walking");
+        });
+    }
+
     private String formatOption(RouteOption option) {
         StringBuilder builder = new StringBuilder();
         builder.append(option.getTitle())
-                .append(" - Budget estimé: ")
+                .append(" — ")
                 .append(option.getTotalEstimatedCost())
-                .append(" €\n");
+                .append(" €");
+
+        RouteDetails details = option.getRouteDetails();
+        if (details != null) {
+            builder.append(" | ")
+                    .append(details.getFormattedDistance())
+                    .append(" | ")
+                    .append(details.getFormattedDuration());
+        }
+
+        builder.append("\n");
 
         List<Place> places = option.getPlaces();
-        for (Place place : places) {
-            builder.append("• ").append(place.getName()).append("\n");
+        for (int i = 0; i < places.size(); i++) {
+            builder.append(i + 1).append(". ")
+                    .append(places.get(i).getName())
+                    .append("\n");
         }
 
         return builder.toString();

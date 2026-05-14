@@ -9,15 +9,23 @@ import java.util.Set;
 public class RouteGenerator {
 
     public List<RouteOption> generateOptions(List<Place> allPlaces, UserPreferences prefs) {
+
+        List<String> requiredNames = parseFavoritePlaces(prefs.favoritePlaces);
+        List<Place> requiredPlaces = findRequiredPlaces(allPlaces, requiredNames);
+
         List<Place> filtered = filterPlaces(allPlaces, prefs);
+        filtered.removeAll(requiredPlaces);
 
         double ecoBudget = prefs.maxBudget * 0.4;
         double balancedBudget = prefs.maxBudget * 0.65;
         double comfortBudget = prefs.maxBudget * 0.9;
 
-        List<Place> eco = buildRoute(filtered, ecoBudget, "eco");
-        List<Place> balanced = buildRoute(filtered, balancedBudget, "balanced");
-        List<Place> comfort = buildRoute(filtered, comfortBudget, "comfort");
+        int maxPlaces = calculateMaxPlaces(prefs);
+
+        List<Place> eco = buildRoute(filtered, ecoBudget, "eco", maxPlaces, requiredPlaces);
+        List<Place> balanced = buildRoute(filtered, balancedBudget, "balanced", maxPlaces, requiredPlaces);
+        List<Place> comfort = buildRoute(filtered, comfortBudget, "comfort", maxPlaces, requiredPlaces);
+
 
         List<RouteOption> options = new ArrayList<>();
         options.add(new RouteOption("Économique", eco, calculateTotal(eco)));
@@ -35,6 +43,8 @@ public class RouteGenerator {
         if (prefs.decouvertes) allowedCategories.add("decouvertes");
         if (prefs.culture) allowedCategories.add("culture");
 
+        int maxAllowedEffort = mapEffortToMax(prefs.effort);
+
         List<Place> result = new ArrayList<>();
 
         for (Place place : allPlaces) {
@@ -46,30 +56,76 @@ public class RouteGenerator {
             if (prefs.heat && !place.isGoodForHeat()) continue;
             if (prefs.rain && !place.isGoodForRain()) continue;
 
+            if (place.getEffortLevel() > maxAllowedEffort) continue;
+
             result.add(place);
         }
 
         return result;
     }
 
-    private List<Place> buildRoute(List<Place> places, double targetBudget, String mode) {
-        List<Place> candidates = new ArrayList<>(places);
+    private int mapEffortToMax(String userEffort) {
+        if (userEffort == null) return 3;
+        switch (userEffort) {
+            case "Faible": return 1;
+            case "Moyen":  return 2;
+            case "Élevé":  return 3;
+            default:       return 3;
+        }
+    }
+    private int calculateMaxPlaces(UserPreferences prefs) {
+        if (prefs.duration == null || prefs.duration.trim().isEmpty()) {
+            return 4;
+        }
+        int hours;
+        try {
+            hours = Integer.parseInt(prefs.duration.trim());
+        } catch (NumberFormatException e) {
+            return 4;
+        }
+        if (hours <= 0) return 4;
 
-        candidates.sort((a, b) -> Double.compare(score(b, mode), score(a, mode)));
+        return mapHoursToPlaces(hours);
+    }
+
+    private int mapHoursToPlaces(int hours) {
+        if (hours <= 2) return 2;
+        if (hours <= 4) return 3;
+        if (hours <= 6) return 4;
+        return 5;
+    }
+
+    private int mapDaysToPlaces(int days) {
+        int total = days * 4;
+        return Math.min(total, 20);
+    }
+
+    private List<Place> buildRoute(List<Place> places, double targetBudget, String mode, int maxPlaces, List<Place> requiredPlaces) {
+        android.util.Log.d("RouteGenerator",
+                "Mode: " + mode + ", maxPlaces: " + maxPlaces +
+                        ", candidates: " + places.size() + ", budget: " + targetBudget);
 
         List<Place> selected = new ArrayList<>();
         Set<String> usedCategories = new HashSet<>();
         double total = 0;
 
+        for (Place required : requiredPlaces) {
+            if (selected.size() >= maxPlaces) break;
+            selected.add(required);
+            usedCategories.add(required.getCategory());
+            total += required.getPrice();
+        }
+
+        List<Place> candidates = new ArrayList<>(places);
+        candidates.sort((a, b) -> Double.compare(score(b, mode), score(a, mode)));
+
         for (Place place : candidates) {
-            if (selected.size() >= 4) break;
+            if (selected.size() >= maxPlaces) break;
 
-            if (total + place.getPrice() > targetBudget) {
-                continue;
-            }
+            if (total + place.getPrice() > targetBudget) continue;
 
-            // Prefer category variety if possible
-            if (usedCategories.contains(place.getCategory()) && selected.size() < 3) {
+            if (usedCategories.contains(place.getCategory())
+                    && selected.size() < (maxPlaces - 1)) {
                 continue;
             }
 
@@ -78,17 +134,20 @@ public class RouteGenerator {
             total += place.getPrice();
         }
 
-        // If we still have too few places, fill remaining slots
         for (Place place : candidates) {
-            if (selected.size() >= 4) break;
+            if (selected.size() >= maxPlaces) break;
             if (selected.contains(place)) continue;
             if (total + place.getPrice() > targetBudget) continue;
 
             selected.add(place);
             total += place.getPrice();
         }
+        android.util.Log.d("RouteGenerator",
+                "Mode: " + mode + " → selected: " + selected.size() +
+                        ", totalCost: " + total);
 
         return selected;
+
     }
 
     private double score(Place place, String mode) {
@@ -121,4 +180,39 @@ public class RouteGenerator {
         }
         return total;
     }
+
+    private List<String> parseFavoritePlaces(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<String> result = new ArrayList<>();
+        String[] parts = input.split(",");
+        for (String part : parts) {
+            String trimmed = part.trim().toLowerCase();
+            if (!trimmed.isEmpty()) {
+                result.add(trimmed);
+            }
+        }
+        return result;
+    }
+
+    private List<Place> findRequiredPlaces(List<Place> allPlaces, List<String> requiredNames) {
+        List<Place> result = new ArrayList<>();
+
+        for (Place place : allPlaces) {
+            String placeName = place.getName().toLowerCase();
+
+            for (String requiredName : requiredNames) {
+                if (placeName.contains(requiredName)) {
+                    result.add(place);
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+
 }

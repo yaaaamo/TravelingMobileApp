@@ -12,6 +12,7 @@ public class Place {
     private boolean goodForCold;
     private boolean goodForHeat;
     private boolean goodForRain;
+    private String photoReference;
 
     public Place() {}
 
@@ -48,4 +49,9 @@ public class Place {
     public void setGoodForCold(boolean goodForCold) { this.goodForCold = goodForCold; }
     public void setGoodForHeat(boolean goodForHeat) { this.goodForHeat = goodForHeat; }
     public void setGoodForRain(boolean goodForRain) { this.goodForRain = goodForRain; }
+
+    public String getPhotoReference() { return photoReference; }
+    public void setPhotoReference(String photoReference) {
+        this.photoReference = photoReference;
+    }
 }

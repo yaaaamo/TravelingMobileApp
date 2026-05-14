@@ -99,21 +99,21 @@
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Durée (en heures)"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
         <EditText
             android:id="@+id/edit_duration"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Ex: 5 jours"
-            android:inputType="text"
+            android:hint="Ex: 6"
+            android:inputType="number"
             android:layout_marginBottom="20dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Effort"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
 
         <Spinner
             android:id="@+id/spinner_effort"
@@ -153,6 +153,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Enregistrer les préférences" />
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginTop="16dp" />
 
         <TextView
             android:id="@+id/text_option_eco"
