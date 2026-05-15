@@ -83,10 +83,10 @@ import java.util.ArrayList;
                             ModelPost post = doc.toObject(ModelPost.class);
 
                             if (post != null) {
+                                post.setPostId(doc.getId()); // ← add this one line
                                 Log.d("Posts", post.getCaption());
                                 postList.add(post);
-                            }
-                        }
+                            }                        }
 
                         adapter.notifyDataSetChanged();
                     });
