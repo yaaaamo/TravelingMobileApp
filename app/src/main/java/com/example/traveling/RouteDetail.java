@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -136,6 +137,15 @@ public class RouteDetail extends Fragment {
         } else {
             statKm.setText("—");
         }
+
+        Button btnRegenerate = view.findViewById(R.id.btn_regenerate);
+        btnRegenerate.setOnClickListener(v -> {
+            TravelPathViewModel vm = new ViewModelProvider(requireActivity())
+                    .get(TravelPathViewModel.class);
+            vm.regenerateRoute(planIndex);
+
+            requireActivity().getSupportFragmentManager().popBackStack();
+        });
 
         return view;
     }

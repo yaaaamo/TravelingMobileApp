@@ -1,12 +1,19 @@
 package com.example.traveling;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class RouteGenerator {
+
+    private boolean isRegenerate = false;
+
+    public void setRegenerate(boolean regenerate) {
+        this.isRegenerate = regenerate;
+    }
 
     public List<RouteOption> generateOptions(List<Place> allPlaces, UserPreferences prefs) {
 
@@ -15,6 +22,11 @@ public class RouteGenerator {
 
         List<Place> filtered = filterPlaces(allPlaces, prefs);
         filtered.removeAll(requiredPlaces);
+
+        if (isRegenerate) {
+            Collections.shuffle(filtered);
+        }
+
 
         int maxPlaces = calculateMaxPlaces(prefs);
         double budget = prefs.maxBudget;
@@ -37,45 +49,6 @@ public class RouteGenerator {
     }
 
 
-    private List<Place> pickTopPlaces(List<Place> sorted, int maxPlaces, List<Place> requiredPlaces) {
-        List<Place> selected = new ArrayList<>();
-
-
-        for (Place required : requiredPlaces) {
-            if (selected.size() >= maxPlaces) break;
-            selected.add(required);
-        }
-
-
-        for (Place place : sorted) {
-            if (selected.size() >= maxPlaces) break;
-            if (selected.contains(place)) continue;
-            selected.add(place);
-        }
-
-        return selected;
-    }
-
-    private double calculateAveragePrice(List<Place> places) {
-        if (places.isEmpty()) return 0;
-        double total = 0;
-        for (Place p : places) total += p.getPrice();
-        return total / places.size();
-    }
-
-    private double calculateMinPrice(List<Place> places) {
-        if (places.isEmpty()) return 0;
-        double min = Double.MAX_VALUE;
-        for (Place p : places) if (p.getPrice() < min) min = p.getPrice();
-        return min;
-    }
-
-    private double calculateMaxPrice(List<Place> places) {
-        if (places.isEmpty()) return 0;
-        double max = 0;
-        for (Place p : places) if (p.getPrice() > max) max = p.getPrice();
-        return max;
-    }
 
     private List<Place> filterPlaces(List<Place> allPlaces, UserPreferences prefs) {
         List<String> allowedCategories = new ArrayList<>();
@@ -152,11 +125,9 @@ public class RouteGenerator {
 
         switch (mode) {
             case "eco":
-
                 candidates.sort((a, b) -> Double.compare(a.getPrice(), b.getPrice()));
                 break;
             case "balanced":
-
                 double perPlace = targetBudget / maxPlaces;
                 candidates.sort((a, b) -> Double.compare(
                         Math.abs(a.getPrice() - perPlace),
@@ -164,11 +135,9 @@ public class RouteGenerator {
                 ));
                 break;
             case "comfort":
-
                 candidates.sort((a, b) -> Double.compare(b.getPrice(), a.getPrice()));
                 break;
         }
-
 
         for (Place place : candidates) {
             if (selected.size() >= maxPlaces) break;
@@ -185,28 +154,6 @@ public class RouteGenerator {
         return selected;
     }
 
-    private double score(Place place, String mode) {
-        double price = place.getPrice();
-        int effort = place.getEffortLevel();
-
-        switch (mode) {
-            case "eco":
-                // Cheap and easy
-                return (100 - price) + (20 - effort * 5);
-
-            case "balanced":
-                // Medium price is better
-                double balancedPriceScore = 50 - Math.abs(35 - price);
-                return balancedPriceScore + (15 - effort * 3);
-
-            case "comfort":
-                // More premium, but easy effort
-                return price + (20 - effort * 5);
-
-            default:
-                return 0;
-        }
-    }
 
     private double calculateTotal(List<Place> places) {
         double total = 0;

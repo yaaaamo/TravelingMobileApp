@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModel;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TravelPathViewModel extends ViewModel {
 
@@ -18,19 +20,39 @@ public class TravelPathViewModel extends ViewModel {
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
 
+    // Kaydet
+    private UserPreferences savedPrefs;
+    private LatLng savedLocation;
+    private String savedTravelMode;
+
     public LiveData<List<RouteOption>> getRouteOptions() { return routeOptions; }
     public LiveData<String> getErrorMessage() { return errorMessage; }
     public LiveData<Boolean> getLoading() { return loading; }
 
     public void generateRoutes(UserPreferences prefs, LatLng userLocation, String travelMode) {
+
+        this.savedPrefs = prefs;
+        this.savedLocation = userLocation;
+        this.savedTravelMode = travelMode;
+
+        fetchAndGenerate();
+    }
+
+    public void regenerateRoute(int planIndex) {
+        if (savedPrefs == null || savedLocation == null) return;
+        generator.setRegenerate(true); // shuffle mode on
+        fetchAndGenerate();
+    }
+
+    private void fetchAndGenerate() {
         loading.setValue(true);
 
         repository.getAllPlaces(new PlaceRepository.PlacesCallback() {
             @Override
             public void onSuccess(List<Place> places) {
-                List<RouteOption> options = generator.generateOptions(places, prefs);
-
-                enrichWithDirections(options, userLocation, travelMode);
+                List<RouteOption> options = generator.generateOptions(places, savedPrefs);
+                generator.setRegenerate(false); // reset after use
+                enrichWithDirections(options, savedLocation, savedTravelMode);
             }
 
             @Override
@@ -40,7 +62,6 @@ public class TravelPathViewModel extends ViewModel {
             }
         });
     }
-
 
     private void enrichWithDirections(List<RouteOption> options,
                                       LatLng userLocation, String travelMode) {
