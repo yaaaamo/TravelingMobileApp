@@ -117,6 +117,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"/>
+        <!-- Comment input -->
+        <EditText
+            android:id="@+id/commentInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Write a comment..."/>
+
+        <Button
+            android:id="@+id/submitCommentButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Post"/>
+
+        <!-- List of comments -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/commentsRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
 
     </LinearLayout>
 
