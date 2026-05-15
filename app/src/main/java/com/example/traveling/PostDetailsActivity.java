@@ -1,5 +1,6 @@
 package com.example.traveling;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -186,6 +187,12 @@ public class PostDetailsActivity extends AppCompatActivity {
                             }
                         }
                     });
+
         }
+        Button backarrow = findViewById(R.id.backarrow);
+        backarrow.setOnClickListener(l ->{
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+        });
     }
 }

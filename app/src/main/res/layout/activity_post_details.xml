@@ -3,7 +3,6 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -11,6 +10,14 @@
         android:padding="16dp">
 
         <!-- TOP USER INFO -->
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Back"
+            android:id="@+id/backarrow"
+            android:drawableEnd="@drawable/backarrow"
+            android:padding="12dp"/>
+
 
         <LinearLayout
             android:layout_width="match_parent"
