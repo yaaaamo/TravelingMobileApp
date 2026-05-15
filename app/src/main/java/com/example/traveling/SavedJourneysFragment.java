@@ -35,6 +35,10 @@ public class SavedJourneysFragment extends Fragment {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return view;
 
+        view.findViewById(R.id.btn_back_saved).setOnClickListener(v ->
+                requireActivity().getSupportFragmentManager().popBackStack()
+        );
+
         FirebaseFirestore.getInstance()
                 .collection("users")
                 .document(user.getUid())
@@ -88,9 +92,7 @@ public class SavedJourneysFragment extends Fragment {
                             places.setText(sb.toString());
                         }
 
-                        view.findViewById(R.id.btn_back_saved).setOnClickListener(v ->
-                                requireActivity().getSupportFragmentManager().popBackStack()
-                        );
+
 
 
                         cardView.findViewById(R.id.btn_delete_journey).setOnClickListener(v -> {

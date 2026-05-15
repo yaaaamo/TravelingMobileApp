@@ -66,18 +66,28 @@
                         android:textColor="@color/white" />
                 </LinearLayout>
 
+
+
             </LinearLayout>
+            <Button
+                android:id="@+id/btn_saved_journeys"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🗺 Saved Journeys"
+                android:layout_below="@id/linearLayout"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"/>
+
 
         </RelativeLayout>
 
+
+
+
     </ScrollView>
 
-    <Button
-        android:id="@+id/btn_saved_journeys"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="🗺 Saved Journeys"
-        android:layout_margin="16dp"/>
+
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
