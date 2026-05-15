@@ -16,23 +16,65 @@ public class RouteGenerator {
         List<Place> filtered = filterPlaces(allPlaces, prefs);
         filtered.removeAll(requiredPlaces);
 
-        double ecoBudget = prefs.maxBudget * 0.4;
-        double balancedBudget = prefs.maxBudget * 0.65;
-        double comfortBudget = prefs.maxBudget * 0.9;
-
         int maxPlaces = calculateMaxPlaces(prefs);
+        double budget = prefs.maxBudget;
 
-        List<Place> eco = buildRoute(filtered, ecoBudget, "eco", maxPlaces, requiredPlaces);
-        List<Place> balanced = buildRoute(filtered, balancedBudget, "balanced", maxPlaces, requiredPlaces);
-        List<Place> comfort = buildRoute(filtered, comfortBudget, "comfort", maxPlaces, requiredPlaces);
 
+        double ecoTarget    = budget * 0.33;
+        double balancedTarget = budget * 0.66;
+        double comfortTarget  = budget;
+
+        List<Place> eco     = buildRoute(filtered, ecoTarget,     "eco",      maxPlaces, requiredPlaces);
+        List<Place> balanced = buildRoute(filtered, balancedTarget, "balanced", maxPlaces, requiredPlaces);
+        List<Place> comfort  = buildRoute(filtered, comfortTarget,  "comfort",  maxPlaces, requiredPlaces);
 
         List<RouteOption> options = new ArrayList<>();
-        options.add(new RouteOption("Économique", eco, calculateTotal(eco)));
-        options.add(new RouteOption("Équilibré", balanced, calculateTotal(balanced)));
-        options.add(new RouteOption("Confort", comfort, calculateTotal(comfort)));
+        options.add(new RouteOption("Économique", eco,     calculateTotal(eco)));
+        options.add(new RouteOption("Équilibré",  balanced, calculateTotal(balanced)));
+        options.add(new RouteOption("Confort",    comfort,  calculateTotal(comfort)));
 
         return options;
+    }
+
+
+    private List<Place> pickTopPlaces(List<Place> sorted, int maxPlaces, List<Place> requiredPlaces) {
+        List<Place> selected = new ArrayList<>();
+
+
+        for (Place required : requiredPlaces) {
+            if (selected.size() >= maxPlaces) break;
+            selected.add(required);
+        }
+
+
+        for (Place place : sorted) {
+            if (selected.size() >= maxPlaces) break;
+            if (selected.contains(place)) continue;
+            selected.add(place);
+        }
+
+        return selected;
+    }
+
+    private double calculateAveragePrice(List<Place> places) {
+        if (places.isEmpty()) return 0;
+        double total = 0;
+        for (Place p : places) total += p.getPrice();
+        return total / places.size();
+    }
+
+    private double calculateMinPrice(List<Place> places) {
+        if (places.isEmpty()) return 0;
+        double min = Double.MAX_VALUE;
+        for (Place p : places) if (p.getPrice() < min) min = p.getPrice();
+        return min;
+    }
+
+    private double calculateMaxPrice(List<Place> places) {
+        if (places.isEmpty()) return 0;
+        double max = 0;
+        for (Place p : places) if (p.getPrice() > max) max = p.getPrice();
+        return max;
     }
 
     private List<Place> filterPlaces(List<Place> allPlaces, UserPreferences prefs) {
@@ -48,6 +90,8 @@ public class RouteGenerator {
         List<Place> result = new ArrayList<>();
 
         for (Place place : allPlaces) {
+            if (place == null) continue;
+            if (place.getCategory() == null) continue;
             if (!allowedCategories.isEmpty() && !allowedCategories.contains(place.getCategory())) {
                 continue;
             }
@@ -101,32 +145,26 @@ public class RouteGenerator {
     }
 
     private List<Place> buildRoute(List<Place> places, double targetBudget, String mode, int maxPlaces, List<Place> requiredPlaces) {
-        List<Place> selected = new ArrayList<>();
-        Set<String> usedCategories = new HashSet<>();
-        double total = 0;
-
-
-        for (Place required : requiredPlaces) {
-            if (selected.size() >= maxPlaces) break;
-            selected.add(required);
-            usedCategories.add(required.getCategory());
-            total += required.getPrice();
-        }
+        List<Place> selected = new ArrayList<>(requiredPlaces);
+        double total = calculateTotal(selected);
 
         List<Place> candidates = new ArrayList<>(places);
 
         switch (mode) {
             case "eco":
+
                 candidates.sort((a, b) -> Double.compare(a.getPrice(), b.getPrice()));
                 break;
             case "balanced":
-                double targetPerPlace = targetBudget / maxPlaces;
+
+                double perPlace = targetBudget / maxPlaces;
                 candidates.sort((a, b) -> Double.compare(
-                        Math.abs(a.getPrice() - targetPerPlace),
-                        Math.abs(b.getPrice() - targetPerPlace)
+                        Math.abs(a.getPrice() - perPlace),
+                        Math.abs(b.getPrice() - perPlace)
                 ));
                 break;
             case "comfort":
+
                 candidates.sort((a, b) -> Double.compare(b.getPrice(), a.getPrice()));
                 break;
         }
@@ -134,19 +172,14 @@ public class RouteGenerator {
 
         for (Place place : candidates) {
             if (selected.size() >= maxPlaces) break;
-            if (total + place.getPrice() > targetBudget) continue;
-            if (usedCategories.contains(place.getCategory()) && selected.size() < (maxPlaces - 1)) continue;
-            selected.add(place);
-            usedCategories.add(place.getCategory());
-            total += place.getPrice();
-        }
-
-        for (Place place : candidates) {
-            if (selected.size() >= maxPlaces) break;
             if (selected.contains(place)) continue;
             if (total + place.getPrice() > targetBudget) continue;
             selected.add(place);
             total += place.getPrice();
+        }
+
+        if (selected.isEmpty() && !candidates.isEmpty()) {
+            selected.add(candidates.get(0));
         }
 
         return selected;
@@ -202,10 +235,15 @@ public class RouteGenerator {
     private List<Place> findRequiredPlaces(List<Place> allPlaces, List<String> requiredNames) {
         List<Place> result = new ArrayList<>();
 
+        if (requiredNames.isEmpty()) return result;
+
         for (Place place : allPlaces) {
+            if (place == null || place.getName() == null) continue; // null guard
+
             String placeName = place.getName().toLowerCase();
 
             for (String requiredName : requiredNames) {
+                if (requiredName == null) continue; // null guard
                 if (placeName.contains(requiredName)) {
                     result.add(place);
                     break;

@@ -114,6 +114,29 @@ public class RouteDetail extends Fragment {
         setupMiniMap(selectedOption);
         setupWeather(view, selectedOption);
 
+        TextView statPrice = view.findViewById(R.id.text_stat_price);
+        TextView statEffort = view.findViewById(R.id.text_stat_effort);
+        TextView statKm = view.findViewById(R.id.text_stat_km);
+
+// price
+        statPrice.setText(String.format("%.0f €", selectedOption.getTotalEstimatedCost()));
+
+// average effort
+        if (!places.isEmpty()) {
+            double avg = 0;
+            for (Place p : places) avg += p.getEffortLevel();
+            avg = avg / places.size();
+            statEffort.setText(String.format("%.1f / 3", avg));
+        }
+
+// km
+        RouteDetails details = selectedOption.getRouteDetails();
+        if (details != null) {
+            statKm.setText(details.getFormattedDistance());
+        } else {
+            statKm.setText("—");
+        }
+
         return view;
     }
 
