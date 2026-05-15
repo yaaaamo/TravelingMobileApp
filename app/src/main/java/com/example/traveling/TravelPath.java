@@ -34,6 +34,7 @@ public class TravelPath extends Fragment {
 
     private TextView textEco, textBalanced, textComfort;
     private ProgressBar progressBar;
+    private boolean hasNavigated = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -81,16 +82,15 @@ public class TravelPath extends Fragment {
                 return;
             }
 
-            Fragment current = requireActivity().getSupportFragmentManager()
-                    .findFragmentById(R.id.fragment_container);
-            if (current instanceof TravelPath) {
+            if (!hasNavigated && isVisible()) {
+                hasNavigated = true;
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .replace(R.id.fragment_container, new RouteResults())
                         .addToBackStack(null)
                         .commit();
             }
-
+            
         });
 
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
@@ -104,6 +104,7 @@ public class TravelPath extends Fragment {
         });
 
         btnSave.setOnClickListener(v -> {
+            hasNavigated = false;
             String budgetText = editBudget.getText().toString().trim();
             String durationText = editDuration.getText().toString().trim();
 
