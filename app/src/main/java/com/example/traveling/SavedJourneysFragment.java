@@ -1,0 +1,119 @@
+package com.example.traveling;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.fragment.app.Fragment;
+
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+public class SavedJourneysFragment extends Fragment {
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_saved_journeys, container, false);
+
+        LinearLayout listContainer = view.findViewById(R.id.saved_journeys_container);
+        TextView emptyText = view.findViewById(R.id.text_empty);
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return view;
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(user.getUid())
+                .collection("savedJourneys")
+                .orderBy("savedAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (querySnapshot.isEmpty()) {
+                        emptyText.setVisibility(View.VISIBLE);
+                        return;
+                    }
+
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        View cardView = inflater.inflate(R.layout.item_saved_journey,
+                                listContainer, false);
+
+                        TextView title = cardView.findViewById(R.id.text_saved_title);
+                        TextView cost = cardView.findViewById(R.id.text_saved_cost);
+                        TextView distance = cardView.findViewById(R.id.text_saved_distance);
+                        TextView duration = cardView.findViewById(R.id.text_saved_duration);
+                        TextView date = cardView.findViewById(R.id.text_saved_date);
+                        TextView places = cardView.findViewById(R.id.text_saved_places);
+
+                        title.setText(doc.getString("title") + " Journey");
+
+                        Double cost_ = doc.getDouble("totalCost");
+                        cost.setText(cost_ != null ? String.format("💰 %.0f €", cost_) : "—");
+
+                        String dist = doc.getString("distance");
+                        distance.setText(dist != null ? "📍 " + dist : "—");
+
+                        String dur = doc.getString("duration");
+                        duration.setText(dur != null ? "⏱ " + dur : "—");
+
+                        Timestamp ts = doc.getTimestamp("savedAt");
+                        if (ts != null) {
+                            String formatted = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                                    .format(ts.toDate());
+                            date.setText("🗓 " + formatted);
+                        }
+
+                        List<Map<String, Object>> placesList =
+                                (List<Map<String, Object>>) doc.get("places");
+                        if (placesList != null) {
+                            StringBuilder sb = new StringBuilder();
+                            for (int i = 0; i < placesList.size(); i++) {
+                                sb.append(i + 1).append(". ")
+                                        .append(placesList.get(i).get("name"));
+                                if (i < placesList.size() - 1) sb.append("\n");
+                            }
+                            places.setText(sb.toString());
+                        }
+
+                        view.findViewById(R.id.btn_back_saved).setOnClickListener(v ->
+                                requireActivity().getSupportFragmentManager().popBackStack()
+                        );
+
+
+                        cardView.findViewById(R.id.btn_delete_journey).setOnClickListener(v -> {
+                            doc.getReference().delete()
+                                    .addOnSuccessListener(unused -> {
+                                        listContainer.removeView(cardView);
+                                        if (listContainer.getChildCount() == 0) {
+                                            emptyText.setVisibility(View.VISIBLE);
+                                        }
+                                    })
+                                    .addOnFailureListener(e ->
+                                            Toast.makeText(requireContext(),
+                                                    "Erreur: " + e.getMessage(),
+                                                    Toast.LENGTH_SHORT).show());
+                        });
+
+                        listContainer.addView(cardView);
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(requireContext(),
+                                "Erreur: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+
+        return view;
+    }
+}

@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.firebase.Firebase;
@@ -54,6 +55,15 @@ public class Profile extends Fragment {
                         }*/
                     });
         }
+
+        Button btnSavedJourneys = view.findViewById(R.id.btn_saved_journeys);
+        btnSavedJourneys.setOnClickListener(v ->
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new SavedJourneysFragment())
+                        .addToBackStack(null)
+                        .commit()
+        );
         return view;
     }
 }

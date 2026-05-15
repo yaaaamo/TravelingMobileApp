@@ -72,6 +72,14 @@
 
     </ScrollView>
 
+    <Button
+        android:id="@+id/btn_saved_journeys"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🗺 Saved Journeys"
+        android:layout_margin="16dp"/>
+
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"

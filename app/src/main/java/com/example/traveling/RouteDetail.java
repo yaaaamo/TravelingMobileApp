@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,8 +25,14 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RouteDetail extends Fragment {
 
@@ -88,7 +95,65 @@ public class RouteDetail extends Fragment {
                 viewModel.regenerateSingleRoute(planIndex)
         );
 
+        Button btnSaveJourney = view.findViewById(R.id.btn_save_journey);
+        btnSaveJourney.setOnClickListener(v -> saveJourney(selectedOption, btnSaveJourney));
+
         return view;
+
+
+    }
+
+    private void saveJourney(RouteOption option, Button btn) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(requireContext(), "Connectez-vous pour sauvegarder.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        btn.setEnabled(false);
+        btn.setText("Saving...");
+
+
+        List<Map<String, Object>> placesData = new ArrayList<>();
+        for (Place place : option.getPlaces()) {
+            Map<String, Object> p = new HashMap<>();
+            p.put("name", place.getName());
+            p.put("category", place.getCategory());
+            p.put("price", place.getPrice());
+            p.put("photoReference", place.getPhotoReference());
+            if (place.getLocation() != null) {
+                p.put("lat", place.getLocation().getLatitude());
+                p.put("lng", place.getLocation().getLongitude());
+            }
+            placesData.add(p);
+        }
+
+        Map<String, Object> journeyData = new HashMap<>();
+        journeyData.put("title", option.getTitle());
+        journeyData.put("totalCost", option.getTotalEstimatedCost());
+        journeyData.put("savedAt", com.google.firebase.Timestamp.now());
+        journeyData.put("places", placesData);
+
+        RouteDetails details = option.getRouteDetails();
+        if (details != null) {
+            journeyData.put("distance", details.getFormattedDistance());
+            journeyData.put("duration", details.getFormattedDuration());
+        }
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(user.getUid())
+                .collection("savedJourneys")
+                .add(journeyData)
+                .addOnSuccessListener(ref -> {
+                    btn.setEnabled(true);
+                    btn.setText("✅ Saved!");
+                })
+                .addOnFailureListener(e -> {
+                    btn.setEnabled(true);
+                    btn.setText("💾 Save");
+                    Toast.makeText(requireContext(), "Erreur: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void renderRoute(View view, RouteOption option,

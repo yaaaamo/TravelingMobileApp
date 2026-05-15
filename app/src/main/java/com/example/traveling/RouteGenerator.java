@@ -211,6 +211,14 @@ public class RouteGenerator {
         return calculateTotal(places);
     }
 
+    public List<String> parseFavoritePublic(String input) {
+        return parseFavoritePlaces(input);
+    }
+
+    public List<Place> findRequiredPublic(List<Place> allPlaces, List<String> requiredNames) {
+        return findRequiredPlaces(allPlaces, requiredNames);
+    }
+
 
 
 

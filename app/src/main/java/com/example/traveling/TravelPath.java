@@ -90,7 +90,7 @@ public class TravelPath extends Fragment {
                         .addToBackStack(null)
                         .commit();
             }
-            
+
         });
 
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {

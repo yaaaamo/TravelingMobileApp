@@ -66,22 +66,34 @@ public class TravelPathViewModel extends ViewModel {
         repository.getAllPlaces(new PlaceRepository.PlacesCallback() {
             @Override
             public void onSuccess(List<Place> allPlaces) {
-                // Mevcut planın yerlerini exclude et
+
+                List<String> requiredNames = generator.parseFavoritePublic(savedPrefs.favoritePlaces);
+                List<Place> requiredPlaces = generator.findRequiredPublic(allPlaces, requiredNames);
+
+
                 Set<String> currentPlaceIds = new HashSet<>();
                 for (Place p : current.get(planIndex).getPlaces()) {
-                    if (p.getId() != null) currentPlaceIds.add(p.getId());
+                    if (p.getId() != null) {
+
+                        boolean isRequired = false;
+                        for (Place req : requiredPlaces) {
+                            if (p.getId().equals(req.getId())) {
+                                isRequired = true;
+                                break;
+                            }
+                        }
+                        if (!isRequired) currentPlaceIds.add(p.getId());
+                    }
                 }
 
-                // Filtered listesi — mevcut yerleri çıkar
                 List<Place> filtered = new ArrayList<>();
                 for (Place p : allPlaces) {
                     if (p == null || p.getName() == null) continue;
-                    if (!currentPlaceIds.contains(p.getId())) {
+                    if (!currentPlaceIds.contains(p.getId()) && !requiredPlaces.contains(p)) {
                         filtered.add(p);
                     }
                 }
 
-                // Budget ve mode belirle
                 double budget = savedPrefs.maxBudget;
                 double targetBudget;
                 switch (planIndex) {
@@ -99,18 +111,17 @@ public class TravelPathViewModel extends ViewModel {
 
                 int maxPlaces = current.get(planIndex).getPlaces().size();
 
-                // Shuffle et sonra seç
                 Collections.shuffle(filtered);
+                // required places'i geç
                 List<Place> newPlaces = generator.buildRoutePublic(
-                        filtered, targetBudget, mode, maxPlaces, new ArrayList<>()
+                        filtered, targetBudget, mode, maxPlaces, requiredPlaces
                 );
 
-                // Eğer boş kaldıysa exclude'u sıfırla
                 if (newPlaces.isEmpty()) {
                     List<Place> all = new ArrayList<>(allPlaces);
                     Collections.shuffle(all);
                     newPlaces = generator.buildRoutePublic(
-                            all, targetBudget, mode, maxPlaces, new ArrayList<>()
+                            all, targetBudget, mode, maxPlaces, requiredPlaces
                     );
                 }
 
@@ -160,6 +171,7 @@ public class TravelPathViewModel extends ViewModel {
             }
         });
     }
+
 
     private void enrichWithDirections(List<RouteOption> options,
                                       LatLng userLocation, String travelMode) {
