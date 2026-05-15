@@ -1,7 +1,15 @@
 package com.example.traveling;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +37,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -98,9 +110,114 @@ public class RouteDetail extends Fragment {
         Button btnSaveJourney = view.findViewById(R.id.btn_save_journey);
         btnSaveJourney.setOnClickListener(v -> saveJourney(selectedOption, btnSaveJourney));
 
+        Button btnExportPdf = view.findViewById(R.id.btn_export_pdf);
+        btnExportPdf.setOnClickListener(v -> exportAsPdf(selectedOption));
+
         return view;
 
 
+    }
+
+    private void exportAsPdf(RouteOption option) {
+
+        PdfDocument document = new PdfDocument();
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4
+        PdfDocument.Page page = document.startPage(pageInfo);
+
+        Canvas canvas = page.getCanvas();
+        Paint titlePaint = new Paint();
+        Paint textPaint = new Paint();
+        Paint linePaint = new Paint();
+
+
+        titlePaint.setTextSize(24f);
+        titlePaint.setFakeBoldText(true);
+        titlePaint.setColor(Color.BLACK);
+        canvas.drawText("Your " + option.getTitle() + " Journey", 40, 60, titlePaint);
+
+
+        linePaint.setColor(Color.GRAY);
+        linePaint.setStrokeWidth(1f);
+        canvas.drawLine(40, 75, 555, 75, linePaint);
+
+
+        textPaint.setTextSize(13f);
+        textPaint.setColor(Color.DKGRAY);
+
+        RouteDetails details = option.getRouteDetails();
+        String distance = details != null ? details.getFormattedDistance() : "—";
+        String duration = details != null ? details.getFormattedDuration() : "—";
+
+        canvas.drawText("Total Cost: " + String.format("%.0f €", option.getTotalEstimatedCost()), 40, 105, textPaint);
+        canvas.drawText("Distance: " + distance, 40, 125, textPaint);
+        canvas.drawText("Duration: " + duration, 40, 145, textPaint);
+
+
+        canvas.drawLine(40, 160, 555, 160, linePaint);
+
+
+        Paint boldPaint = new Paint();
+        boldPaint.setTextSize(13f);
+        boldPaint.setFakeBoldText(true);
+        boldPaint.setColor(Color.BLACK);
+
+        textPaint.setColor(Color.DKGRAY);
+        textPaint.setTextSize(12f);
+
+        int y = 185;
+        String[] timeLabels = {"09:00 AM", "12:30 PM", "03:00 PM", "06:00 PM", "08:30 PM"};
+
+        List<Place> places = option.getPlaces();
+        for (int i = 0; i < places.size(); i++) {
+            Place place = places.get(i);
+            String time = i < timeLabels.length ? timeLabels[i] : "";
+
+            canvas.drawText((i + 1) + ". " + place.getName(), 40, y, boldPaint);
+            canvas.drawText(time + "  |  " + place.getCategory() + "  |  " + place.getPrice() + " €", 60, y + 18, textPaint);
+
+            y += 50;
+            if (y > 800) break;
+        }
+
+        document.finishPage(page);
+
+
+        String fileName = "Journey_" + option.getTitle() + "_" + System.currentTimeMillis() + ".pdf";
+
+        try {
+            File pdfFile;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                // Android 10+ → MediaStore
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
+                values.put(MediaStore.Downloads.IS_PENDING, 1);
+
+                ContentResolver resolver = requireContext().getContentResolver();
+                Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+
+                if (uri != null) {
+                    try (OutputStream out = resolver.openOutputStream(uri)) {
+                        document.writeTo(out);
+                    }
+                    values.clear();
+                    values.put(MediaStore.Downloads.IS_PENDING, 0);
+                    resolver.update(uri, values, null, null);
+                    Toast.makeText(getContext(), "PDF saved to Downloads!", Toast.LENGTH_LONG).show();
+                }
+            } else {
+                // Android 9 ve altı
+                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                pdfFile = new File(downloadsDir, fileName);
+                document.writeTo(new FileOutputStream(pdfFile));
+                Toast.makeText(getContext(), "PDF saved: " + pdfFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+            }
+        } catch (IOException e) {
+            Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("PDF", "Export failed", e);
+        } finally {
+            document.close();
+        }
     }
 
     private void saveJourney(RouteOption option, Button btn) {
