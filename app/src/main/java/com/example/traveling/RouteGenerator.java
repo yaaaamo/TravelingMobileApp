@@ -201,5 +201,17 @@ public class RouteGenerator {
         return result;
     }
 
+    public List<Place> buildRoutePublic(List<Place> places, double targetBudget,
+                                        String mode, int maxPlaces,
+                                        List<Place> requiredPlaces) {
+        return buildRoute(places, targetBudget, mode, maxPlaces, requiredPlaces);
+    }
+
+    public double calculateTotalPublic(List<Place> places) {
+        return calculateTotal(places);
+    }
+
+
+
 
 }

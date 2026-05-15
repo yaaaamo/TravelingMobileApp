@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,15 +27,16 @@ public class RouteResults extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_route_results, container, false);
 
+        // viewModel ÖNCE
+        viewModel = new ViewModelProvider(requireActivity()).get(TravelPathViewModel.class);
+
         RecyclerView recyclerView = view.findViewById(R.id.recycler_routes);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         adapter = new RouteOptionAdapter(new ArrayList<>(), option -> {
-
             List<RouteOption> currentOptions = viewModel.getRouteOptions().getValue();
             if (currentOptions == null) return;
             int planIndex = currentOptions.indexOf(option);
-
 
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
@@ -44,14 +46,16 @@ public class RouteResults extends Fragment {
         });
         recyclerView.setAdapter(adapter);
 
-
-        viewModel = new ViewModelProvider(requireActivity()).get(TravelPathViewModel.class);
-
         viewModel.getRouteOptions().observe(getViewLifecycleOwner(), options -> {
             if (options != null) {
                 adapter.updateData(options);
             }
         });
+
+        ImageButton btnBack = view.findViewById(R.id.btn_back);
+        btnBack.setOnClickListener(v ->
+                requireActivity().getSupportFragmentManager().popBackStack()
+        );
 
         return view;
     }

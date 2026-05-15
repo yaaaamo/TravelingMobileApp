@@ -81,11 +81,16 @@ public class TravelPath extends Fragment {
                 return;
             }
 
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new RouteResults())
-                    .addToBackStack(null)
-                    .commit();
+            Fragment current = requireActivity().getSupportFragmentManager()
+                    .findFragmentById(R.id.fragment_container);
+            if (current instanceof TravelPath) {
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new RouteResults())
+                        .addToBackStack(null)
+                        .commit();
+            }
+
         });
 
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {

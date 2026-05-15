@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,6 @@ public class TravelPathViewModel extends ViewModel {
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
 
-    // Kaydet
     private UserPreferences savedPrefs;
     private LatLng savedLocation;
     private String savedTravelMode;
@@ -30,17 +31,9 @@ public class TravelPathViewModel extends ViewModel {
     public LiveData<Boolean> getLoading() { return loading; }
 
     public void generateRoutes(UserPreferences prefs, LatLng userLocation, String travelMode) {
-
         this.savedPrefs = prefs;
         this.savedLocation = userLocation;
         this.savedTravelMode = travelMode;
-
-        fetchAndGenerate();
-    }
-
-    public void regenerateRoute(int planIndex) {
-        if (savedPrefs == null || savedLocation == null) return;
-        generator.setRegenerate(true); // shuffle mode on
         fetchAndGenerate();
     }
 
@@ -51,8 +44,113 @@ public class TravelPathViewModel extends ViewModel {
             @Override
             public void onSuccess(List<Place> places) {
                 List<RouteOption> options = generator.generateOptions(places, savedPrefs);
-                generator.setRegenerate(false); // reset after use
                 enrichWithDirections(options, savedLocation, savedTravelMode);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                loading.setValue(false);
+                errorMessage.setValue(e.getMessage());
+            }
+        });
+    }
+
+    public void regenerateSingleRoute(int planIndex) {
+        if (savedPrefs == null || savedLocation == null) return;
+
+        List<RouteOption> current = routeOptions.getValue();
+        if (current == null) return;
+
+        loading.setValue(true);
+
+        repository.getAllPlaces(new PlaceRepository.PlacesCallback() {
+            @Override
+            public void onSuccess(List<Place> allPlaces) {
+                // Mevcut planın yerlerini exclude et
+                Set<String> currentPlaceIds = new HashSet<>();
+                for (Place p : current.get(planIndex).getPlaces()) {
+                    if (p.getId() != null) currentPlaceIds.add(p.getId());
+                }
+
+                // Filtered listesi — mevcut yerleri çıkar
+                List<Place> filtered = new ArrayList<>();
+                for (Place p : allPlaces) {
+                    if (p == null || p.getName() == null) continue;
+                    if (!currentPlaceIds.contains(p.getId())) {
+                        filtered.add(p);
+                    }
+                }
+
+                // Budget ve mode belirle
+                double budget = savedPrefs.maxBudget;
+                double targetBudget;
+                switch (planIndex) {
+                    case 0: targetBudget = budget * 0.33; break;
+                    case 1: targetBudget = budget * 0.66; break;
+                    default: targetBudget = budget; break;
+                }
+
+                String mode;
+                switch (planIndex) {
+                    case 0: mode = "eco"; break;
+                    case 1: mode = "balanced"; break;
+                    default: mode = "comfort"; break;
+                }
+
+                int maxPlaces = current.get(planIndex).getPlaces().size();
+
+                // Shuffle et sonra seç
+                Collections.shuffle(filtered);
+                List<Place> newPlaces = generator.buildRoutePublic(
+                        filtered, targetBudget, mode, maxPlaces, new ArrayList<>()
+                );
+
+                // Eğer boş kaldıysa exclude'u sıfırla
+                if (newPlaces.isEmpty()) {
+                    List<Place> all = new ArrayList<>(allPlaces);
+                    Collections.shuffle(all);
+                    newPlaces = generator.buildRoutePublic(
+                            all, targetBudget, mode, maxPlaces, new ArrayList<>()
+                    );
+                }
+
+                RouteOption newOption = new RouteOption(
+                        current.get(planIndex).getTitle(),
+                        newPlaces,
+                        generator.calculateTotalPublic(newPlaces)
+                );
+
+                List<LatLng> waypoints = newOption.getPlacesAsLatLng();
+                if (waypoints.isEmpty()) {
+                    List<RouteOption> updated = new ArrayList<>(current);
+                    updated.set(planIndex, newOption);
+                    loading.postValue(false);
+                    routeOptions.postValue(updated);
+                    return;
+                }
+
+                directionsService.getOptimizedRoute(
+                        savedLocation, waypoints, savedTravelMode,
+                        new DirectionsService.RouteCallback() {
+                            @Override
+                            public void onSuccess(RouteDetails details) {
+                                newOption.setRouteDetails(details);
+                                newOption.reorderPlacesByOptimization();
+                                List<RouteOption> updated = new ArrayList<>(current);
+                                updated.set(planIndex, newOption);
+                                loading.postValue(false);
+                                routeOptions.postValue(updated);
+                            }
+
+                            @Override
+                            public void onFailure(Exception e) {
+                                List<RouteOption> updated = new ArrayList<>(current);
+                                updated.set(planIndex, newOption);
+                                loading.postValue(false);
+                                routeOptions.postValue(updated);
+                            }
+                        }
+                );
             }
 
             @Override

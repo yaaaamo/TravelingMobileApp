@@ -17,7 +17,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
-
 import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -31,6 +30,8 @@ import java.util.List;
 public class RouteDetail extends Fragment {
 
     private static final String ARG_PLAN_INDEX = "plan_index";
+    private LinearLayout timelineContainer;
+    private LayoutInflater savedInflater;
 
     public static RouteDetail newInstance(int planIndex) {
         RouteDetail fragment = new RouteDetail();
@@ -45,6 +46,7 @@ public class RouteDetail extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_route_detail, container, false);
+        savedInflater = inflater;
 
         int planIndex = getArguments() != null
                 ? getArguments().getInt(ARG_PLAN_INDEX, 0) : 0;
@@ -54,75 +56,83 @@ public class RouteDetail extends Fragment {
                         .get(TravelPathViewModel.class);
 
         List<RouteOption> options = viewModel.getRouteOptions().getValue();
-        if (options == null || planIndex >= options.size()) {
-            return view;
-        }
+        if (options == null || planIndex >= options.size()) return view;
+
+        timelineContainer = view.findViewById(R.id.timeline_container);
+
+        TextView statPrice = view.findViewById(R.id.text_stat_price);
+        TextView statEffort = view.findViewById(R.id.text_stat_effort);
+        TextView statKm = view.findViewById(R.id.text_stat_km);
+        TextView title = view.findViewById(R.id.text_journey_title);
+        TextView description = view.findViewById(R.id.text_journey_description);
 
         RouteOption selectedOption = options.get(planIndex);
+        setupMiniMap(selectedOption);
+        renderRoute(view, selectedOption, title, description, statPrice, statEffort, statKm);
+        setupWeather(view, selectedOption);
 
-        android.util.Log.d("RouteDetail", "Total places: " + selectedOption.getPlaces().size());
-        for (Place p : selectedOption.getPlaces()) {
-            android.util.Log.d("RouteDetail",
-                    "Place: " + p.getName() +
-                            ", location: " + (p.getLocation() == null ? "NULL" : "OK"));
-        }
+        Button btnRegenerate = view.findViewById(R.id.btn_regenerate);
 
+        viewModel.getLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            btnRegenerate.setEnabled(!isLoading);
+            btnRegenerate.setText(isLoading ? "Loading..." : "🔄 Regenerate");
+        });
 
-        TextView title = view.findViewById(R.id.text_journey_title);
-        title.setText(generateTitle(selectedOption));
+        viewModel.getRouteOptions().observe(getViewLifecycleOwner(), updatedOptions -> {
+            if (updatedOptions == null || planIndex >= updatedOptions.size()) return;
+            RouteOption updatedOption = updatedOptions.get(planIndex);
+            renderRoute(view, updatedOption, title, description, statPrice, statEffort, statKm);
+        });
 
-        TextView description = view.findViewById(R.id.text_journey_description);
-        description.setText(generateDescription(selectedOption));
+        btnRegenerate.setOnClickListener(v ->
+                viewModel.regenerateSingleRoute(planIndex)
+        );
 
-        // Timeline RecyclerView
-        LinearLayout timelineContainer = view.findViewById(R.id.timeline_container);
+        return view;
+    }
 
+    private void renderRoute(View view, RouteOption option,
+                             TextView title, TextView description,
+                             TextView statPrice, TextView statEffort, TextView statKm) {
 
         String[] TIME_LABELS = {"MORNING", "LUNCH", "AFTERNOON", "EVENING", "NIGHT"};
         String[] TIMES = {"09:00 AM", "12:30 PM", "03:00 PM", "06:00 PM", "08:30 PM"};
         String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
 
-        List<Place> places = selectedOption.getPlaces();
+        title.setText("Your " + option.getTitle() + " Escape");
+        description.setText("A curated journey through " + option.getPlaces().size()
+                + " unique places, balancing culture, taste, and discovery.");
+
+        timelineContainer.removeAllViews();
+        List<Place> places = option.getPlaces();
         for (int i = 0; i < places.size(); i++) {
             Place place = places.get(i);
-            View itemView = inflater.inflate(R.layout.item_timeline_place, timelineContainer, false);
-
-            TextView timeLabel = itemView.findViewById(R.id.text_time_label);
-            TextView time = itemView.findViewById(R.id.text_time);
-            TextView name = itemView.findViewById(R.id.text_place_name);
-            TextView placeDescription = itemView.findViewById(R.id.text_place_description);
-            placeDescription.setText(getGenericDescription(place));
-            ImageView image = itemView.findViewById(R.id.image_place);
+            View itemView = savedInflater.inflate(R.layout.item_timeline_place,
+                    timelineContainer, false);
 
             int labelIndex = Math.min(i, TIME_LABELS.length - 1);
-            timeLabel.setText(TIME_LABELS[labelIndex]);
-            time.setText(TIMES[labelIndex]);
-            name.setText(place.getName());
-            description.setText(getGenericDescription(place));
+            ((TextView) itemView.findViewById(R.id.text_time_label)).setText(TIME_LABELS[labelIndex]);
+            ((TextView) itemView.findViewById(R.id.text_time)).setText(TIMES[labelIndex]);
+            ((TextView) itemView.findViewById(R.id.text_place_name)).setText(place.getName());
+            ((TextView) itemView.findViewById(R.id.text_place_description))
+                    .setText(getGenericDescription(place));
 
             if (place.getPhotoReference() != null && !place.getPhotoReference().isEmpty()) {
                 String photoUrl = "https://maps.googleapis.com/maps/api/place/photo"
                         + "?maxwidth=800"
                         + "&photo_reference=" + place.getPhotoReference()
                         + "&key=" + API_KEY;
-                Glide.with(requireContext()).load(photoUrl).centerCrop().into(image);
+                Glide.with(requireContext())
+                        .load(photoUrl)
+                        .centerCrop()
+                        .into((ImageView) itemView.findViewById(R.id.image_place));
             }
 
             timelineContainer.addView(itemView);
         }
 
-        // MINI MAP
-        setupMiniMap(selectedOption);
-        setupWeather(view, selectedOption);
+        statPrice.setText(String.format("%.0f €", option.getTotalEstimatedCost()));
 
-        TextView statPrice = view.findViewById(R.id.text_stat_price);
-        TextView statEffort = view.findViewById(R.id.text_stat_effort);
-        TextView statKm = view.findViewById(R.id.text_stat_km);
-
-// price
-        statPrice.setText(String.format("%.0f €", selectedOption.getTotalEstimatedCost()));
-
-// average effort
         if (!places.isEmpty()) {
             double avg = 0;
             for (Place p : places) avg += p.getEffortLevel();
@@ -130,26 +140,13 @@ public class RouteDetail extends Fragment {
             statEffort.setText(String.format("%.1f / 3", avg));
         }
 
-// km
-        RouteDetails details = selectedOption.getRouteDetails();
-        if (details != null) {
-            statKm.setText(details.getFormattedDistance());
-        } else {
-            statKm.setText("—");
-        }
+        RouteDetails details = option.getRouteDetails();
+        statKm.setText(details != null ? details.getFormattedDistance() : "—");
 
-        Button btnRegenerate = view.findViewById(R.id.btn_regenerate);
-        btnRegenerate.setOnClickListener(v -> {
-            TravelPathViewModel vm = new ViewModelProvider(requireActivity())
-                    .get(TravelPathViewModel.class);
-            vm.regenerateRoute(planIndex);
-
-            requireActivity().getSupportFragmentManager().popBackStack();
-        });
-
-        return view;
+        updateMap(option);
     }
 
+    private com.google.android.gms.maps.GoogleMap savedMap;
 
     private void setupMiniMap(RouteOption selectedOption) {
         FragmentManager fragmentManager = getChildFragmentManager();
@@ -159,45 +156,50 @@ public class RouteDetail extends Fragment {
         if (mapFragment == null) return;
 
         mapFragment.getMapAsync(googleMap -> {
-            LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
-            boolean hasValidLocation = false;
-
-
-            for (Place place : selectedOption.getPlaces()) {
-                if (place.getLocation() != null) {
-                    LatLng latLng = new LatLng(
-                            place.getLocation().getLatitude(),
-                            place.getLocation().getLongitude());
-
-                    googleMap.addMarker(new MarkerOptions()
-                            .position(latLng)
-                            .title(place.getName()));
-
-                    boundsBuilder.include(latLng);
-                    hasValidLocation = true;
-                }
-            }
-
-
-            RouteDetails details = selectedOption.getRouteDetails();
-            if (details != null && details.getPolylinePoints() != null) {
-                googleMap.addPolyline(new PolylineOptions()
-                        .addAll(details.getPolylinePoints())
-                        .color(Color.BLUE)
-                        .width(8));
-            }
-
-
-            if (hasValidLocation) {
-                googleMap.moveCamera(
-                        CameraUpdateFactory.newLatLngBounds(
-                                boundsBuilder.build(), 100));
-            }
+            savedMap = googleMap;
+            updateMap(selectedOption);
         });
     }
 
-    private void setupWeather(View view, RouteOption option) {
+    private void updateMap(RouteOption option) {
+        if (savedMap == null) return;
 
+        savedMap.clear();
+
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+        boolean hasValidLocation = false;
+
+        for (Place place : option.getPlaces()) {
+            if (place.getLocation() != null) {
+                LatLng latLng = new LatLng(
+                        place.getLocation().getLatitude(),
+                        place.getLocation().getLongitude());
+
+                savedMap.addMarker(new MarkerOptions()
+                        .position(latLng)
+                        .title(place.getName()));
+
+                boundsBuilder.include(latLng);
+                hasValidLocation = true;
+            }
+        }
+
+        RouteDetails details = option.getRouteDetails();
+        if (details != null && details.getPolylinePoints() != null) {
+            savedMap.addPolyline(new PolylineOptions()
+                    .addAll(details.getPolylinePoints())
+                    .color(Color.BLUE)
+                    .width(8));
+        }
+
+        if (hasValidLocation) {
+            savedMap.moveCamera(
+                    CameraUpdateFactory.newLatLngBounds(
+                            boundsBuilder.build(), 100));
+        }
+    }
+
+    private void setupWeather(View view, RouteOption option) {
         double sumLat = 0, sumLng = 0;
         int count = 0;
 
@@ -209,11 +211,10 @@ public class RouteDetail extends Fragment {
             }
         }
 
-        if (count == 0) return; // Konum bilgisi yok
+        if (count == 0) return;
 
         double centerLat = sumLat / count;
         double centerLng = sumLng / count;
-
 
         WeatherService weatherService = new WeatherService();
         weatherService.getTodayForecast(centerLat, centerLng,
@@ -222,26 +223,15 @@ public class RouteDetail extends Fragment {
                     public void onSuccess(WeatherInfo info) {
                         LinearLayout layout = view.findViewById(R.id.layout_weather);
                         TextView text = view.findViewById(R.id.text_weather);
-
                         text.setText(info.getShortDisplay());
                         layout.setVisibility(View.VISIBLE);
                     }
 
                     @Override
                     public void onFailure(Exception e) {
-
                         Log.e("RouteDetail", "Weather fetch failed", e);
                     }
                 });
-    }
-
-    private String generateTitle(RouteOption option) {
-        return "Your " + option.getTitle() + " Escape";
-    }
-
-    private String generateDescription(RouteOption option) {
-        return "A curated journey through " + option.getPlaces().size()
-                + " unique places, balancing culture, taste, and discovery.";
     }
 
     private String getGenericDescription(Place place) {
