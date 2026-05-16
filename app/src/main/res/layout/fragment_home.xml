@@ -32,7 +32,6 @@
         android:contentDescription="Add photo"
         android:background="@drawable/addphoto" />
 
-</FrameLayout>
     <SearchView
         android:id="@+id/searchView"
         android:layout_width="match_parent"
@@ -45,11 +44,4 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <Button
-        android:id="@+id/addphoto"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Add photo" />
-
-</LinearLayout>
+    </LinearLayout>
