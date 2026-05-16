@@ -20,20 +20,30 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHolder> {
 
-    private List<ModelPost> postList;
     private FirebaseFirestore db;
 
     private FirebaseAuth auth;
+    private List<ModelPost> postList;       // filtered list (what's displayed)
+    private List<ModelPost> postListFull;   // full original list
+
     public AdapterPosts(List<ModelPost> postList) {
         this.postList = postList;
         db = FirebaseFirestore.getInstance();
 
         auth = FirebaseAuth.getInstance();
+        //for search bar
+
+        this.postList = postList;
+        this.postListFull = new ArrayList<>(postList); // ← keep a copy
+        db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
+
     }
 
     @NonNull
@@ -195,4 +205,30 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHold
 
         }
     }
+    public void filter(String query) {
+        postList.clear();
+
+        if (query.isEmpty()) {
+            postList.addAll(postListFull); // show everything if search is empty
+        } else {
+            String lowerQuery = query.toLowerCase().trim();
+
+            for (ModelPost post : postListFull) {
+                // search by location, tags, or travel type
+                if ((post.getLocation() != null && post.getLocation().toLowerCase().contains(lowerQuery)) ||
+                        (post.getTags() != null && post.getTags().toLowerCase().contains(lowerQuery)) ||
+                        (post.getTravelType() != null && post.getTravelType().toLowerCase().contains(lowerQuery)) ||
+                        (post.getCountry() != null && post.getCountry().toLowerCase().contains(lowerQuery))) {
+
+                    postList.add(post);
+                }
+            }
+        }
+        notifyDataSetChanged();
+    }
+    public void updateFullList(List<ModelPost> newList) {
+        postListFull.clear();
+        postListFull.addAll(newList);
+    }
+
 }

@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.SearchView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
@@ -26,69 +27,83 @@ import java.util.ArrayList;
 
  public class Home extends Fragment {
 
-        private RecyclerView recyclerView;
-        private ArrayList<ModelPost> postList;
-        private AdapterPosts adapter;
+     private RecyclerView recyclerView;
+     private ArrayList<ModelPost> postList;
+     private AdapterPosts adapter;
 
-        private FirebaseFirestore db;
+     private FirebaseFirestore db;
 
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
+     @Override
+     public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                              Bundle savedInstanceState) {
 
-            View view = inflater.inflate(R.layout.fragment_home, container, false);
+         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-            db = FirebaseFirestore.getInstance();
+         db = FirebaseFirestore.getInstance();
 
-            recyclerView = view.findViewById(R.id.postrecyclerview);
-            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+         recyclerView = view.findViewById(R.id.postrecyclerview);
+         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-            postList = new ArrayList<>();
-            adapter = new AdapterPosts(postList);
-            recyclerView.setAdapter(adapter);
+         postList = new ArrayList<>();
+         adapter = new AdapterPosts(postList);
+         recyclerView.setAdapter(adapter);
+         SearchView searchView = view.findViewById(R.id.searchView);
+         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 
-            Button add = view.findViewById(R.id.addphoto);
+             @Override
+             public boolean onQueryTextSubmit(String query) {
+                 adapter.filter(query);
+                 return false;
+             }
 
-            add.setOnClickListener(v -> {
-                requireActivity().getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.fragment_container, new AddPhoto())
-                        .addToBackStack(null)
-                        .commit();
-            });
+             @Override
+             public boolean onQueryTextChange(String newText) {
+                 adapter.filter(newText); // filters as you type
+                 return false;
+             }
+         });
+         Button add = view.findViewById(R.id.addphoto);
 
-            loadPosts();
+         add.setOnClickListener(v -> {
+             requireActivity().getSupportFragmentManager()
+                     .beginTransaction()
+                     .replace(R.id.fragment_container, new Add_fragment())
+                     .addToBackStack(null)
+                     .commit();
+         });
 
-            return view;
-        }
+         loadPosts();
 
-        private void loadPosts() {
+         return view;
+     }
 
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
+     private void loadPosts() {
 
-            db.collection("posts")
-                    .addSnapshotListener((value, error) -> {
+         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-                        if (error != null) {
-                            Log.e("FIREBASE", error.getMessage());
-                            return;
-                        }
+         db.collection("posts")
+                 .addSnapshotListener((value, error) -> {
 
-                        if (value == null) return;
+                     if (error != null) {
+                         Log.e("FIREBASE", error.getMessage());
+                         return;
+                     }
 
-                        postList.clear();
+                     if (value == null) return;
 
-                        for (DocumentSnapshot doc : value.getDocuments()) {
+                     postList.clear();
 
-                            ModelPost post = doc.toObject(ModelPost.class);
+                     for (DocumentSnapshot doc : value.getDocuments()) {
+                         ModelPost post = doc.toObject(ModelPost.class);
+                         if (post != null) {
+                             post.setPostId(doc.getId());
+                             Log.d("Posts", post.getCaption());
+                             postList.add(post);
+                         }
+                     }
 
-                            if (post != null) {
-                                post.setPostId(doc.getId()); // ← add this one line
-                                Log.d("Posts", post.getCaption());
-                                postList.add(post);
-                            }                        }
-
-                        adapter.notifyDataSetChanged();
-                    });
-        }
-    }
+                     adapter.updateFullList(postList);
+                     adapter.notifyDataSetChanged();
+                 });
+     }
+ }

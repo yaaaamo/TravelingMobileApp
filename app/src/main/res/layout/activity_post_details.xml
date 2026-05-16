@@ -11,12 +11,12 @@
 
         <!-- TOP USER INFO -->
         <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Back"
             android:id="@+id/backarrow"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
             android:drawableEnd="@drawable/backarrow"
-            android:padding="12dp"/>
+            android:padding="12dp"
+            android:text="" />
 
 
         <LinearLayout
