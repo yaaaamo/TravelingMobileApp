@@ -1,4 +1,6 @@
 import org.gradle.kotlin.dsl.implementation
+import java.util.Properties
+import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.android.application)
@@ -14,6 +16,10 @@ android {
         version = release(36)
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.example.traveling"
         minSdk = 24
@@ -22,6 +28,21 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val localPropsFile = rootProject.file("local.properties")
+        var googleApiKey = ""
+        if (localPropsFile.exists()) {
+            val lines: List<String> = localPropsFile.readLines()
+            for (line in lines) {
+                if (line.startsWith("GOOGLE_API_KEY=")) {
+                    googleApiKey = line.substringAfter("=").trim()
+                    break
+                }
+            }
+        }
+
+        buildConfigField("String", "GOOGLE_API_KEY", "\"$googleApiKey\"")
+        manifestPlaceholders["GOOGLE_API_KEY"] = googleApiKey
     }
 
     buildTypes {
