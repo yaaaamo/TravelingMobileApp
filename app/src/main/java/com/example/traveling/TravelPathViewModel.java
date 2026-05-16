@@ -44,6 +44,7 @@ public class TravelPathViewModel extends ViewModel {
             @Override
             public void onSuccess(List<Place> places) {
                 List<RouteOption> options = generator.generateOptions(places, savedPrefs);
+                applySelectedDurationToOptions(options);
                 enrichWithDirections(options, savedLocation, savedTravelMode);
             }
 
@@ -131,6 +132,8 @@ public class TravelPathViewModel extends ViewModel {
                         generator.calculateTotalPublic(newPlaces)
                 );
 
+                newOption.setSelectedDurationMinutes(getSelectedDurationMinutesFromPrefs());
+
                 List<LatLng> waypoints = newOption.getPlacesAsLatLng();
                 if (waypoints.isEmpty()) {
                     List<RouteOption> updated = new ArrayList<>(current);
@@ -210,6 +213,27 @@ public class TravelPathViewModel extends ViewModel {
         if (completed[0] == total) {
             loading.postValue(false);
             routeOptions.postValue(options);
+        }
+    }
+
+    private void applySelectedDurationToOptions(List<RouteOption> options) {
+        int selectedDurationMinutes = getSelectedDurationMinutesFromPrefs();
+
+        for (RouteOption option : options) {
+            option.setSelectedDurationMinutes(selectedDurationMinutes);
+        }
+    }
+
+    private int getSelectedDurationMinutesFromPrefs() {
+        if (savedPrefs == null || savedPrefs.duration == null) {
+            return 180;
+        }
+
+        try {
+            int durationHours = Integer.parseInt(savedPrefs.duration.trim());
+            return durationHours * 60;
+        } catch (Exception e) {
+            return 180;
         }
     }
 }

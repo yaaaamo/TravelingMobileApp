@@ -1,6 +1,8 @@
 package com.example.traveling;
 
 import com.google.firebase.firestore.GeoPoint;
+import java.util.List;
+import java.util.Map;
 
 public class Place {
     private String id;
@@ -13,6 +15,15 @@ public class Place {
     private boolean goodForHeat;
     private boolean goodForRain;
     private String photoReference;
+
+    private String googlePlaceId;
+    private Boolean openNow;
+
+    private List<String> weekdayText;
+
+    private List<Map<String, Object>> openingPeriods;
+
+    private List<String> videoUrls;
 
     public Place() {}
 
@@ -53,5 +64,46 @@ public class Place {
     public String getPhotoReference() { return photoReference; }
     public void setPhotoReference(String photoReference) {
         this.photoReference = photoReference;
+    }
+
+
+    public String getGooglePlaceId() {
+        return googlePlaceId;
+    }
+
+    public void setGooglePlaceId(String googlePlaceId) {
+        this.googlePlaceId = googlePlaceId;
+    }
+
+    public Boolean getOpenNow() {
+        return openNow;
+    }
+
+    public void setOpenNow(Boolean openNow) {
+        this.openNow = openNow;
+    }
+
+    public List<String> getWeekdayText() {
+        return weekdayText;
+    }
+
+    public void setWeekdayText(List<String> weekdayText) {
+        this.weekdayText = weekdayText;
+    }
+
+    public List<Map<String, Object>> getOpeningPeriods() {
+        return openingPeriods;
+    }
+
+    public void setOpeningPeriods(List<Map<String, Object>> openingPeriods) {
+        this.openingPeriods = openingPeriods;
+    }
+
+    public List<String> getVideoUrls() {
+        return videoUrls;
+    }
+
+    public void setVideoUrls(List<String> videoUrls) {
+        this.videoUrls = videoUrls;
     }
 }

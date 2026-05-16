@@ -80,6 +80,14 @@
                 android:scaleType="centerCrop"
                 android:background="#EEEEEE" />
 
+            <LinearLayout
+                android:id="@+id/layout_video_links"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="8dp"
+                android:visibility="gone" />
+
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
