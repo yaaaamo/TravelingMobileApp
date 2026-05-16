@@ -131,6 +131,7 @@ public class RouteDetail extends Fragment {
 
         viewModel.getRouteOptions().observe(getViewLifecycleOwner(), updatedOptions -> {
             if (updatedOptions == null || planIndex >= updatedOptions.size()) return;
+            if (savedInflater == null) return;
             RouteOption updatedOption = updatedOptions.get(planIndex);
             renderRoute(view, updatedOption, title, description, statPrice, statEffort, statKm);
         });
@@ -318,6 +319,9 @@ public class RouteDetail extends Fragment {
                              TextView title, TextView description,
                              TextView statPrice, TextView statEffort, TextView statKm) {
 
+        if (savedInflater == null || timelineContainer == null) return;
+
+
         String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
 
         title.setText("Your " + option.getTitle() + " Escape");
@@ -329,72 +333,82 @@ public class RouteDetail extends Fragment {
         List<ScheduledStop> schedule = generateOpeningAwareSchedule(option, option.getPlaces());
 
         for (int i = 0; i < schedule.size(); i++) {
-            ScheduledStop stop = schedule.get(i);
-            Place place = stop.place;
-            TimeSlot slot = stop.slot;
+            try {
+                ScheduledStop stop = schedule.get(i);
+                Place place = stop.place;
+                TimeSlot slot = stop.slot;
 
-            View itemView = savedInflater.inflate(R.layout.item_timeline_place,
-                    timelineContainer, false);
+                View itemView = savedInflater.inflate(R.layout.item_timeline_place,
+                        timelineContainer, false);
 
-            ((TextView) itemView.findViewById(R.id.text_time_label)).setText(slot.label);
-            ((TextView) itemView.findViewById(R.id.text_time)).setText(slot.time);
-            ((TextView) itemView.findViewById(R.id.text_place_name)).setText(place.getName());
+                ((TextView) itemView.findViewById(R.id.text_time_label)).setText(slot.label);
+                ((TextView) itemView.findViewById(R.id.text_time)).setText(slot.time);
+                ((TextView) itemView.findViewById(R.id.text_place_name)).setText(place.getName());
 
-            String placeDescription = getGenericDescription(place);
-            String openingWarning = getOpeningWarning(place, slot.startMinutes, slot.endMinutes);
+                String placeDescription = getGenericDescription(place);
+                String openingWarning = getOpeningWarning(place, slot.startMinutes, slot.endMinutes);
 
-            if (!openingWarning.isEmpty()) {
-                placeDescription += "\n" + openingWarning;
-            }
+                if (!openingWarning.isEmpty()) {
+                    placeDescription += "\n" + openingWarning;
+                }
 
-            ((TextView) itemView.findViewById(R.id.text_place_description))
-                    .setText(placeDescription);
+                ((TextView) itemView.findViewById(R.id.text_place_description))
+                        .setText(placeDescription);
 
-            if (place.getPhotoReference() != null && !place.getPhotoReference().isEmpty()) {
-                String photoUrl = "https://maps.googleapis.com/maps/api/place/photo"
-                        + "?maxwidth=800"
-                        + "&photo_reference=" + place.getPhotoReference()
-                        + "&key=" + API_KEY;
-                Glide.with(requireContext())
-                        .load(photoUrl)
-                        .centerCrop()
-                        .into((ImageView) itemView.findViewById(R.id.image_place));
-            }
+                if (place.getPhotoReference() != null && !place.getPhotoReference().isEmpty()) {
+                    String photoUrl = "https://maps.googleapis.com/maps/api/place/photo"
+                            + "?maxwidth=800"
+                            + "&photo_reference=" + place.getPhotoReference()
+                            + "&key=" + API_KEY;
+                    Glide.with(requireContext())
+                            .load(photoUrl)
+                            .centerCrop()
+                            .into((ImageView) itemView.findViewById(R.id.image_place));
+                }
 
-            LinearLayout videoLinksLayout = itemView.findViewById(R.id.layout_video_links);
-            videoLinksLayout.removeAllViews();
+                LinearLayout videoLinksLayout = itemView.findViewById(R.id.layout_video_links);
 
-            List<String> videoUrls = place.getVideoUrls();
+                if (videoLinksLayout != null) {
+                    videoLinksLayout.removeAllViews();
 
-            if (videoUrls != null && !videoUrls.isEmpty()) {
-                videoLinksLayout.setVisibility(View.VISIBLE);
+                    List<String> videoUrls = place.getVideoUrls();
 
-                for (int videoIndex = 0; videoIndex < videoUrls.size(); videoIndex++) {
-                    String videoUrl = videoUrls.get(videoIndex);
+                    if (videoUrls != null && !videoUrls.isEmpty()) {
+                        videoLinksLayout.setVisibility(View.VISIBLE);
 
-                    if (videoUrl == null || videoUrl.trim().isEmpty()) {
-                        continue;
+                        for (int videoIndex = 0; videoIndex < videoUrls.size(); videoIndex++) {
+                            String videoUrl = videoUrls.get(videoIndex);
+
+                            if (videoUrl == null || videoUrl.trim().isEmpty()) {
+                                continue;
+                            }
+
+                            TextView videoLink = new TextView(requireContext());
+                            videoLink.setText("▶ Watch video " + (videoIndex + 1));
+                            videoLink.setTextSize(14);
+                            videoLink.setTextColor(Color.rgb(46, 125, 50));
+                            videoLink.setPadding(0, 6, 0, 6);
+
+                            videoLink.setOnClickListener(v -> {
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl));
+                                startActivity(intent);
+                            });
+
+                            videoLinksLayout.addView(videoLink);
+                        }
+
+                        if (videoLinksLayout.getChildCount() == 0) {
+                            videoLinksLayout.setVisibility(View.GONE);
+                        }
+                    } else {
+                        videoLinksLayout.setVisibility(View.GONE);
                     }
-
-                    TextView videoLink = new TextView(requireContext());
-                    videoLink.setText("▶ Watch video " + (videoIndex + 1));
-                    videoLink.setTextSize(14);
-                    videoLink.setTextColor(Color.rgb(46, 125, 50));
-                    videoLink.setPadding(0, 6, 0, 6);
-
-                    videoLink.setOnClickListener(v -> {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl));
-                        startActivity(intent);
-                    });
-
-                    videoLinksLayout.addView(videoLink);
                 }
 
-                if (videoLinksLayout.getChildCount() == 0) {
-                    videoLinksLayout.setVisibility(View.GONE);
-                }
-            } else {
-                videoLinksLayout.setVisibility(View.GONE);
+                timelineContainer.addView(itemView);
+
+            } catch (Exception e) {
+                android.util.Log.e("RouteDetail", "Timeline error at index " + i, e);
             }
         }
 
