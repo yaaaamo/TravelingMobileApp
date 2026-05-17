@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Que voulez-vous voir ?"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <CheckBox
+        android:id="@+id/check_regen_culture"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🏛 Culture"
+        android:checked="true"/>
+
+    <CheckBox
+        android:id="@+id/check_regen_restauration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🍽 Restauration"
+        android:checked="true"/>
+
+    <CheckBox
+        android:id="@+id/check_regen_loisirs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🎭 Loisirs"
+        android:checked="true"/>
+
+    <CheckBox
+        android:id="@+id/check_regen_decouvertes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🔍 Découvertes"
+        android:checked="true"/>
+
+    <TextView
+        android:id="@+id/text_regen_budget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Budget : 100 €"
+        android:layout_marginTop="16dp"
+        android:textStyle="bold"/>
+
+    <SeekBar
+        android:id="@+id/seekbar_regen_budget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>

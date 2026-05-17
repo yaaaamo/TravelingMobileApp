@@ -44,6 +44,7 @@ public class TravelPathViewModel extends ViewModel {
             @Override
             public void onSuccess(List<Place> places) {
                 List<RouteOption> options = generator.generateOptions(places, savedPrefs);
+                applySelectedDurationToOptions(options);
                 enrichWithDirections(options, savedLocation, savedTravelMode);
             }
 
@@ -131,6 +132,8 @@ public class TravelPathViewModel extends ViewModel {
                         generator.calculateTotalPublic(newPlaces)
                 );
 
+                newOption.setSelectedDurationMinutes(getSelectedDurationMinutesFromPrefs());
+
                 List<LatLng> waypoints = newOption.getPlacesAsLatLng();
                 if (waypoints.isEmpty()) {
                     List<RouteOption> updated = new ArrayList<>(current);
@@ -211,5 +214,132 @@ public class TravelPathViewModel extends ViewModel {
             loading.postValue(false);
             routeOptions.postValue(options);
         }
+    }
+
+    private void applySelectedDurationToOptions(List<RouteOption> options) {
+        int selectedDurationMinutes = getSelectedDurationMinutesFromPrefs();
+
+        for (RouteOption option : options) {
+            option.setSelectedDurationMinutes(selectedDurationMinutes);
+        }
+    }
+
+    private int getSelectedDurationMinutesFromPrefs() {
+        if (savedPrefs == null || savedPrefs.duration == null) {
+            return 180;
+        }
+
+        try {
+            int durationHours = Integer.parseInt(savedPrefs.duration.trim());
+            return durationHours * 60;
+        } catch (Exception e) {
+            return 180;
+        }
+    }
+
+    public void regenerateSingleRouteWithPrefs(int planIndex, UserPreferences adjustedPrefs) {
+        if (savedLocation == null) return;
+
+        List<RouteOption> current = routeOptions.getValue();
+        if (current == null) return;
+
+        loading.setValue(true);
+
+        UserPreferences originalPrefs = savedPrefs;
+
+        repository.getAllPlaces(new PlaceRepository.PlacesCallback() {
+            @Override
+            public void onSuccess(List<Place> allPlaces) {
+                List<String> requiredNames =
+                        generator.parseFavoritePublic(
+                                originalPrefs != null ? originalPrefs.favoritePlaces : "");
+                List<Place> requiredPlaces =
+                        generator.findRequiredPublic(allPlaces, requiredNames);
+
+                List<Place> filtered = new ArrayList<>();
+                List<String> allowedCategories = new ArrayList<>();
+                if (adjustedPrefs.culture) allowedCategories.add("culture");
+                if (adjustedPrefs.restauration) allowedCategories.add("restauration");
+                if (adjustedPrefs.loisirs) allowedCategories.add("loisirs");
+                if (adjustedPrefs.decouvertes) allowedCategories.add("decouvertes");
+
+                for (Place p : allPlaces) {
+                    if (p == null || p.getName() == null) continue;
+                    if (!allowedCategories.isEmpty()
+                            && !allowedCategories.contains(p.getCategory())) continue;
+                    filtered.add(p);
+                }
+
+                Collections.shuffle(filtered);
+
+                double targetBudget;
+                String mode;
+                switch (planIndex) {
+                    case 0: targetBudget = adjustedPrefs.maxBudget * 0.33;
+                        mode = "eco"; break;
+                    case 1: targetBudget = adjustedPrefs.maxBudget * 0.66;
+                        mode = "balanced"; break;
+                    default: targetBudget = adjustedPrefs.maxBudget;
+                        mode = "comfort"; break;
+                }
+
+                int maxPlaces = current.get(planIndex).getPlaces().size();
+
+                List<Place> newPlaces = generator.buildRoutePublic(
+                        filtered, targetBudget, mode, maxPlaces, requiredPlaces);
+
+                if (newPlaces.isEmpty()) {
+                    Collections.shuffle(allPlaces);
+                    newPlaces = generator.buildRoutePublic(
+                            allPlaces, targetBudget, mode, maxPlaces, requiredPlaces);
+                }
+
+                RouteOption newOption = new RouteOption(
+                        current.get(planIndex).getTitle(),
+                        newPlaces,
+                        generator.calculateTotalPublic(newPlaces)
+                );
+
+                newOption.setSelectedDurationMinutes(getSelectedDurationMinutesFromPrefs());
+
+                List<LatLng> waypoints = newOption.getPlacesAsLatLng();
+                if (waypoints.isEmpty()) {
+                    List<RouteOption> updated = new ArrayList<>(current);
+                    updated.set(planIndex, newOption);
+                    loading.postValue(false);
+                    routeOptions.postValue(updated);
+                    return;
+                }
+
+                directionsService.getOptimizedRoute(
+                        savedLocation, waypoints, savedTravelMode,
+                        new DirectionsService.RouteCallback() {
+                            @Override
+                            public void onSuccess(RouteDetails details) {
+                                newOption.setRouteDetails(details);
+                                newOption.reorderPlacesByOptimization();
+                                List<RouteOption> updated = new ArrayList<>(current);
+                                updated.set(planIndex, newOption);
+                                loading.postValue(false);
+                                routeOptions.postValue(updated);
+                            }
+
+                            @Override
+                            public void onFailure(Exception e) {
+                                List<RouteOption> updated = new ArrayList<>(current);
+                                updated.set(planIndex, newOption);
+                                loading.postValue(false);
+                                routeOptions.postValue(updated);
+                            }
+                        }
+                );
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                loading.setValue(false);
+                errorMessage.setValue(e.getMessage());
+            }
+        });
     }
 }

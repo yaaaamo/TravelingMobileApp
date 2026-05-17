@@ -4,15 +4,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.List;
 
 public class RouteOptionAdapter
         extends RecyclerView.Adapter<RouteOptionAdapter.RouteViewHolder> {
+
+    private static final String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
 
     public interface OnSelectListener {
         void onSelect(RouteOption option);
@@ -58,6 +63,7 @@ public class RouteOptionAdapter
         private final TextView textPlacesCount;
         private final TextView textPlacesList;
         private final Button btnSelect;
+        private final ImageView imageRoute;
 
         RouteViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -68,6 +74,7 @@ public class RouteOptionAdapter
             textPlacesCount = itemView.findViewById(R.id.text_places_count);
             textPlacesList = itemView.findViewById(R.id.text_places_list);
             btnSelect = itemView.findViewById(R.id.btn_select_plan);
+            imageRoute = itemView.findViewById(R.id.image_route);
         }
 
         void bind(RouteOption option, OnSelectListener listener) {
@@ -77,7 +84,7 @@ public class RouteOptionAdapter
             // Budget
             textBudget.setText(String.format("%.0f €", option.getTotalEstimatedCost()));
 
-
+            // Distance & duration
             RouteDetails details = option.getRouteDetails();
             if (details != null) {
                 textDistance.setText(details.getFormattedDistance());
@@ -88,11 +95,11 @@ public class RouteOptionAdapter
             }
 
             // Places count
-            textPlacesCount.setText(String.valueOf(option.getPlaces().size()));
+            List<Place> places = option.getPlaces();
+            textPlacesCount.setText(String.valueOf(places.size()));
 
             // Places list as numbered string
             StringBuilder placesBuilder = new StringBuilder();
-            List<Place> places = option.getPlaces();
             for (int i = 0; i < places.size(); i++) {
                 placesBuilder.append(i + 1).append(". ")
                         .append(places.get(i).getName());
@@ -101,6 +108,29 @@ public class RouteOptionAdapter
                 }
             }
             textPlacesList.setText(placesBuilder.toString());
+
+            // Load first available photo as card image
+            String photoRef = null;
+            for (Place p : places) {
+                if (p.getPhotoReference() != null && !p.getPhotoReference().isEmpty()) {
+                    photoRef = p.getPhotoReference();
+                    break;
+                }
+            }
+
+            if (photoRef != null) {
+                String photoUrl = "https://maps.googleapis.com/maps/api/place/photo"
+                        + "?maxwidth=800"
+                        + "&photo_reference=" + photoRef
+                        + "&key=" + API_KEY;
+                Glide.with(itemView.getContext())
+                        .load(photoUrl)
+                        .centerCrop()
+                        .into(imageRoute);
+            } else {
+                // clear in case the view is being recycled with an old image
+                imageRoute.setImageDrawable(null);
+            }
 
             // Click listener
             btnSelect.setOnClickListener(v -> listener.onSelect(option));
