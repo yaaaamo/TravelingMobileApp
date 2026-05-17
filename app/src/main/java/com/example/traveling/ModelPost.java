@@ -21,8 +21,8 @@ public class ModelPost {
     private String groupid ;
     private String userID;
     private String googlePlaceId;
-    private double lat;
-    private double lng;
+    private Double lat;
+    private Double lng;
 
 
     public ModelPost() {
@@ -157,9 +157,9 @@ public class ModelPost {
     public void setUserID(String userID){this.userID= userID ; }
     public String getGooglePlaceId() { return googlePlaceId; }
     public void setGooglePlaceId(String googlePlaceId) { this.googlePlaceId = googlePlaceId; }
-    public double getLat() { return lat; }
+    public Double getLat() { return lat; }
     public void setLat(double lat) { this.lat = lat; }
-    public double getLng() { return lng; }
+    public Double getLng() { return lng; }
     public void setLng(double lng) { this.lng = lng; }
 
 }

@@ -107,16 +107,17 @@ public class PostDetailsActivity extends AppCompatActivity {
         postId                 = getIntent().getStringExtra("postId");
         //google location
         // read coordinates
-        double lat            = getIntent().getDoubleExtra("lat", 0);
-        double lng            = getIntent().getDoubleExtra("lng", 0);
+        double lat = getIntent().getDoubleExtra("lat", 0);
+        double lng = getIntent().getDoubleExtra("lng", 0);
+        boolean hasCoordinates = (lat != 0 || lng != 0);
         String googlePlaceId  = getIntent().getStringExtra("googlePlaceId");
 
 // bind and wire directions button
         Button directionsButton = findViewById(R.id.coordinates);
 
-        if (lat == 0 && lng == 0) {
-            // if no coordinates available :
+        if (!hasCoordinates) {
             directionsButton.setText("No coordinates available");
+            directionsButton.setEnabled(false);
         } else {
             directionsButton.setVisibility(View.VISIBLE);
             directionsButton.setText(" " + locationText + "\n" + String.format("%.4f, %.4f", lat, lng));

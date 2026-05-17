@@ -87,7 +87,7 @@ public class GroupDetailsActivity extends AppCompatActivity {
         if (groupId == null) return;
 
         db.collection("posts")
-                .whereEqualTo("groupId", groupId)
+                .whereEqualTo("groupid", groupId)
                 .addSnapshotListener((value, error) -> {
                     if (value == null) return;
 
