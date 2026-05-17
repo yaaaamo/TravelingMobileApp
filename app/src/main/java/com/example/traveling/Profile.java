@@ -5,10 +5,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -88,6 +90,15 @@ public class Profile extends Fragment {
                         .commit()
         );
 
+        Button btnEditProfile = view.findViewById(R.id.btn_edit_profile);
+        btnEditProfile.setOnClickListener(v ->
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new EditProfileFragment())
+                        .addToBackStack(null)
+                        .commit()
+        );
+
 
         Button btnLogout = view.findViewById(R.id.btn_logout);
         btnLogout.setOnClickListener(v -> {
@@ -100,6 +111,28 @@ public class Profile extends Fragment {
                     requireContext(), LoginActivity.class));
             requireActivity().finish();
         });
+
+        ImageView avatarView = view.findViewById(R.id.avatartv);
+
+        if (user != null && !user.isAnonymous()) {
+            db.collection("Users").document(user.getUid())
+                    .addSnapshotListener((snapshot, error) -> {
+                        if (snapshot == null) return;
+                        name.setText(snapshot.getString("fullname"));
+                        email.setText(snapshot.getString("email"));
+
+
+                        String photoUrl = snapshot.getString("profilePicture");
+                        if (photoUrl != null && !photoUrl.isEmpty()) {
+                            Glide.with(this)
+                                    .load(photoUrl)
+                                    .circleCrop()
+                                    .into(avatarView);
+                        }
+                    });
+        }
+
+
 
         return view;
     }
