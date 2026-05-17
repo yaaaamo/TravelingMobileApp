@@ -64,6 +64,16 @@ public class Profile extends Fragment {
                         .addToBackStack(null)
                         .commit()
         );
+
+        Button btnLikedJourneys = view.findViewById(R.id.btn_liked_journeys);
+        btnLikedJourneys.setOnClickListener(v ->
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new LikedJourneysFragment())
+                        .addToBackStack(null)
+                        .commit()
+        );
+
         return view;
     }
 }

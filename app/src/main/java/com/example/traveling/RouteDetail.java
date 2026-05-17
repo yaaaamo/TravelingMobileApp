@@ -53,6 +53,14 @@ public class RouteDetail extends Fragment {
     private LinearLayout timelineContainer;
     private LayoutInflater savedInflater;
 
+    private TravelPathViewModel viewModel;
+
+    private RouteOption currentOption;
+
+    private boolean isLiked = false;
+    private boolean isDisliked = false;
+
+
     private static class TimeSlot {
         String label;
         String time;
@@ -102,7 +110,7 @@ public class RouteDetail extends Fragment {
         int planIndex = getArguments() != null
                 ? getArguments().getInt(ARG_PLAN_INDEX, 0) : 0;
 
-        TravelPathViewModel viewModel =
+        viewModel =
                 new ViewModelProvider(requireActivity())
                         .get(TravelPathViewModel.class);
 
@@ -117,10 +125,10 @@ public class RouteDetail extends Fragment {
         TextView title = view.findViewById(R.id.text_journey_title);
         TextView description = view.findViewById(R.id.text_journey_description);
 
-        RouteOption selectedOption = options.get(planIndex);
-        setupMiniMap(selectedOption);
-        renderRoute(view, selectedOption, title, description, statPrice, statEffort, statKm);
-        setupWeather(view, selectedOption);
+        currentOption = options.get(planIndex);
+        setupMiniMap(currentOption);
+        renderRoute(view, currentOption, title, description, statPrice, statEffort, statKm);
+        setupWeather(view, currentOption);
 
         Button btnRegenerate = view.findViewById(R.id.btn_regenerate);
 
@@ -132,21 +140,121 @@ public class RouteDetail extends Fragment {
         viewModel.getRouteOptions().observe(getViewLifecycleOwner(), updatedOptions -> {
             if (updatedOptions == null || planIndex >= updatedOptions.size()) return;
             if (savedInflater == null) return;
-            RouteOption updatedOption = updatedOptions.get(planIndex);
-            renderRoute(view, updatedOption, title, description, statPrice, statEffort, statKm);
+            currentOption = updatedOptions.get(planIndex); // ← currentOption güncelleniyor
+            renderRoute(view, currentOption, title, description, statPrice, statEffort, statKm);
         });
 
         btnRegenerate.setOnClickListener(v ->
-                viewModel.regenerateSingleRoute(planIndex)
+                showRegenerateDialog(planIndex)
         );
 
         Button btnSaveJourney = view.findViewById(R.id.btn_save_journey);
-        btnSaveJourney.setOnClickListener(v -> saveJourney(selectedOption, btnSaveJourney));
+        btnSaveJourney.setOnClickListener(v -> saveJourney(currentOption, btnSaveJourney));
 
         Button btnExportPdf = view.findViewById(R.id.btn_export_pdf);
-        btnExportPdf.setOnClickListener(v -> exportAsPdf(selectedOption));
+        btnExportPdf.setOnClickListener(v -> exportAsPdf(currentOption));
+
+        Button btnShare = view.findViewById(R.id.btn_share_journey);
+        btnShare.setOnClickListener(v -> shareJourney(currentOption));
 
         return view;
+    }
+
+
+    private void showRegenerateDialog(int planIndex) {
+        android.app.AlertDialog.Builder builder =
+                new android.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("🔄 Ajuster le parcours");
+
+        View dialogView = getLayoutInflater().inflate(
+                R.layout.dialog_regenerate_preferences, null);
+        builder.setView(dialogView);
+
+        android.widget.CheckBox checkCulture =
+                dialogView.findViewById(R.id.check_regen_culture);
+        android.widget.CheckBox checkRestauration =
+                dialogView.findViewById(R.id.check_regen_restauration);
+        android.widget.CheckBox checkLoisirs =
+                dialogView.findViewById(R.id.check_regen_loisirs);
+        android.widget.CheckBox checkDecouvertes =
+                dialogView.findViewById(R.id.check_regen_decouvertes);
+        android.widget.SeekBar seekBudget =
+                dialogView.findViewById(R.id.seekbar_regen_budget);
+        android.widget.TextView textBudget =
+                dialogView.findViewById(R.id.text_regen_budget);
+
+        seekBudget.setMax(200);
+        seekBudget.setProgress(100);
+        textBudget.setText("Budget : 100 €");
+
+        seekBudget.setOnSeekBarChangeListener(
+                new android.widget.SeekBar.OnSeekBarChangeListener() {
+                    @Override
+                    public void onProgressChanged(android.widget.SeekBar seekBar,
+                                                  int progress, boolean fromUser) {
+                        textBudget.setText("Budget : " + progress + " €");
+                    }
+                    @Override public void onStartTrackingTouch(android.widget.SeekBar s) {}
+                    @Override public void onStopTrackingTouch(android.widget.SeekBar s) {}
+                });
+
+        builder.setPositiveButton("Régénérer", (dialog, which) -> {
+            UserPreferences adjustedPrefs = new UserPreferences();
+            adjustedPrefs.culture = checkCulture.isChecked();
+            adjustedPrefs.restauration = checkRestauration.isChecked();
+            adjustedPrefs.loisirs = checkLoisirs.isChecked();
+            adjustedPrefs.decouvertes = checkDecouvertes.isChecked();
+            adjustedPrefs.maxBudget = seekBudget.getProgress();
+            adjustedPrefs.effort = "Moyen";
+            adjustedPrefs.duration = "3";
+
+            if (!adjustedPrefs.culture && !adjustedPrefs.restauration
+                    && !adjustedPrefs.loisirs && !adjustedPrefs.decouvertes) {
+                adjustedPrefs.culture = true;
+                adjustedPrefs.restauration = true;
+                adjustedPrefs.loisirs = true;
+                adjustedPrefs.decouvertes = true;
+            }
+
+            viewModel.regenerateSingleRouteWithPrefs(planIndex, adjustedPrefs);
+        });
+
+        builder.setNegativeButton("Annuler", null);
+        builder.show();
+    }
+
+    private void shareJourney(RouteOption option) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("🗺 Mon parcours : ").append(option.getTitle()).append("\n\n");
+
+        List<ScheduledStop> schedule = generateOpeningAwareSchedule(option, option.getPlaces());
+
+        for (int i = 0; i < schedule.size(); i++) {
+            ScheduledStop stop = schedule.get(i);
+            sb.append(stop.slot.label)
+                    .append(" • ")
+                    .append(stop.slot.time)
+                    .append("\n")
+                    .append(i + 1)
+                    .append(". ")
+                    .append(stop.place.getName())
+                    .append(" (")
+                    .append(stop.place.getPrice())
+                    .append(" €)\n\n");
+        }
+
+        RouteDetails details = option.getRouteDetails();
+        if (details != null) {
+            sb.append("📍 Distance : ").append(details.getFormattedDistance()).append("\n");
+        }
+        sb.append("💰 Total : ").append(String.format("%.0f €", option.getTotalEstimatedCost()));
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Mon parcours " + option.getTitle());
+        shareIntent.putExtra(Intent.EXTRA_TEXT, sb.toString());
+
+        startActivity(Intent.createChooser(shareIntent, "Partager via..."));
     }
 
     private void exportAsPdf(RouteOption option) {
@@ -292,6 +400,8 @@ public class RouteDetail extends Fragment {
         journeyData.put("totalCost", option.getTotalEstimatedCost());
         journeyData.put("savedAt", com.google.firebase.Timestamp.now());
         journeyData.put("places", placesData);
+        journeyData.put("liked", false);
+        journeyData.put("disliked", false);
 
         RouteDetails details = option.getRouteDetails();
         if (details != null) {

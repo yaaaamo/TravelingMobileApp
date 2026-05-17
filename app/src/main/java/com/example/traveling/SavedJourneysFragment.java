@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,7 +18,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -61,6 +61,8 @@ public class SavedJourneysFragment extends Fragment {
                         TextView duration = cardView.findViewById(R.id.text_saved_duration);
                         TextView date = cardView.findViewById(R.id.text_saved_date);
                         TextView places = cardView.findViewById(R.id.text_saved_places);
+                        Button btnLike = cardView.findViewById(R.id.btn_like_journey);
+                        Button btnDislike = cardView.findViewById(R.id.btn_dislike_journey);
 
                         title.setText(doc.getString("title") + " Journey");
 
@@ -93,7 +95,52 @@ public class SavedJourneysFragment extends Fragment {
                         }
 
 
+                        Boolean liked = doc.getBoolean("liked");
+                        Boolean disliked = doc.getBoolean("disliked");
 
+                        if (Boolean.TRUE.equals(liked)) {
+                            btnLike.setBackgroundTintList(
+                                    android.content.res.ColorStateList.valueOf(
+                                            android.graphics.Color.parseColor("#4CAF50")));
+                        } else if (Boolean.TRUE.equals(disliked)) {
+                            btnDislike.setBackgroundTintList(
+                                    android.content.res.ColorStateList.valueOf(
+                                            android.graphics.Color.parseColor("#F44336")));
+                        }
+
+                        btnLike.setOnClickListener(v -> {
+                            Boolean currentLiked = doc.getBoolean("liked");
+                            boolean newLiked = !Boolean.TRUE.equals(currentLiked);
+
+                            doc.getReference().update("liked", newLiked, "disliked", false)
+                                    .addOnSuccessListener(unused -> {
+                                        btnLike.setBackgroundTintList(
+                                                android.content.res.ColorStateList.valueOf(
+                                                        newLiked
+                                                                ? android.graphics.Color.parseColor("#4CAF50")
+                                                                : android.graphics.Color.parseColor("#E8F5E9")));
+                                        btnDislike.setBackgroundTintList(
+                                                android.content.res.ColorStateList.valueOf(
+                                                        android.graphics.Color.parseColor("#FFEBEE")));
+                                    });
+                        });
+
+                        btnDislike.setOnClickListener(v -> {
+                            Boolean currentDisliked = doc.getBoolean("disliked");
+                            boolean newDisliked = !Boolean.TRUE.equals(currentDisliked);
+
+                            doc.getReference().update("disliked", newDisliked, "liked", false)
+                                    .addOnSuccessListener(unused -> {
+                                        btnDislike.setBackgroundTintList(
+                                                android.content.res.ColorStateList.valueOf(
+                                                        newDisliked
+                                                                ? android.graphics.Color.parseColor("#F44336")
+                                                                : android.graphics.Color.parseColor("#FFEBEE")));
+                                        btnLike.setBackgroundTintList(
+                                                android.content.res.ColorStateList.valueOf(
+                                                        android.graphics.Color.parseColor("#E8F5E9")));
+                                    });
+                        });
 
                         cardView.findViewById(R.id.btn_delete_journey).setOnClickListener(v -> {
                             doc.getReference().delete()
@@ -107,6 +154,13 @@ public class SavedJourneysFragment extends Fragment {
                                             Toast.makeText(requireContext(),
                                                     "Erreur: " + e.getMessage(),
                                                     Toast.LENGTH_SHORT).show());
+                        });
+
+
+                        cardView.setOnClickListener(v -> {
+                            JourneyPreviewBottomSheet sheet =
+                                    JourneyPreviewBottomSheet.newInstance(doc);
+                            sheet.show(getParentFragmentManager(), "journey_preview");
                         });
 
                         listContainer.addView(cardView);
