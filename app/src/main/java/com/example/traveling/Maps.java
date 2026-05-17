@@ -240,7 +240,11 @@ public class Maps extends Fragment implements OnMapReadyCallback {
 
                     @Override
                     public void onFailure(Exception e) {
-
+                        if (getContext() != null) {
+                            Toast.makeText(requireContext(),
+                                    "Transit route unavailable for this area. Try another mode.",
+                                    Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
     }
@@ -289,4 +293,6 @@ public class Maps extends Fragment implements OnMapReadyCallback {
             }
         });
     }
+
+
 }

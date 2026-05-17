@@ -78,7 +78,6 @@ public class DirectionsService {
 
 
     private String buildUrl(LatLng origin, List<LatLng> waypoints, String mode) {
-        // Son waypoint'i destination olarak kullan
         LatLng destination = waypoints.get(waypoints.size() - 1);
 
         StringBuilder url = new StringBuilder(BASE_URL);
@@ -93,6 +92,10 @@ public class DirectionsService {
         }
 
         url.append("&mode=").append(mode);
+        if (mode.equals("transit")) {
+            long departureTime = System.currentTimeMillis() / 1000;
+            url.append("&departure_time=").append(departureTime);
+        }
         url.append("&key=").append(API_KEY);
 
         return url.toString();

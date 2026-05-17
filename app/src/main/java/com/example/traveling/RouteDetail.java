@@ -472,6 +472,9 @@ public class RouteDetail extends Fragment {
                             + "&key=" + API_KEY;
                     Glide.with(requireContext())
                             .load(photoUrl)
+                            .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.ALL)
+                            .placeholder(android.R.drawable.ic_menu_gallery)
+                            .error(android.R.drawable.ic_menu_gallery)
                             .centerCrop()
                             .into((ImageView) itemView.findViewById(R.id.image_place));
                 }
