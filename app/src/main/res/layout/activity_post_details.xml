@@ -154,6 +154,8 @@
             android:id="@+id/submitCommentButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/mainpink"
+            android:textColorHint="@color/brown"
             android:text="Post" />
 
         <!-- COMMENTS LIST -->

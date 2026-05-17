@@ -95,7 +95,9 @@ private String foundPlaceId = null;
 
         //for google location !!!
         Button addToPlacesBtn = view.findViewById(R.id.addToPlacesBtn);
-
+        addToPlacesBtn.setOnClickListener(l ->{
+            showAddPlaceDialog("blablabla");
+        });
         EditText placeSearchInput    = view.findViewById(R.id.placeSearchInput);
         Button searchPlaceBtn        = view.findViewById(R.id.searchPlaceBtn);
         TextView confirmedPlaceText  = view.findViewById(R.id.confirmedPlaceText);
@@ -109,35 +111,58 @@ private String foundPlaceId = null;
 
             searchPlaceBtn.setEnabled(false);
             searchPlaceBtn.setText("Searching...");
+            addToPlacesBtn.setVisibility(View.GONE);
 
-            addToPlacesBtn.setOnClickListener(l -> showAddPlaceDialog(
-                    placeSearchInput.getText().toString().trim()));
-            placesApiService.searchPlace(query, new PlacesApiService.PlaceSearchCallback() {
-                @Override
-                public void onSuccess(PlacesApiService.PlaceSearchResult result) {
-                    foundPlaceId   = result.placeId;
-                    foundLat       = result.lat;
-                    foundLng       = result.lng;
-                    foundPlaceName = result.name;
+            // search your own places collection first
+            db.collection("places")
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
+                        String lowerQuery = query.toLowerCase().trim();
 
-                    confirmedPlaceText.setText("✓ " + result.name);
-                    confirmedPlaceText.setVisibility(View.VISIBLE);
-                    searchPlaceBtn.setEnabled(true);
-                    searchPlaceBtn.setText("Search");
-                }
+                        // look for a place whose name contains the query
+                        DocumentSnapshot match = null;
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            String name = doc.getString("name");
+                            if (name != null && name.toLowerCase().contains(lowerQuery)) {
+                                match = doc;
+                                break;
+                            }
+                        }
 
-                @Override
-                public void onFailure(Exception e) {
-                    Toast.makeText(getContext(),
-                            "Place not found — you can add it manually",
-                            Toast.LENGTH_SHORT).show();
-                    addToPlacesBtn.setVisibility(View.VISIBLE); // ← show manual add button
-                    searchPlaceBtn.setEnabled(true);
-                    searchPlaceBtn.setText("Search");
-                }
-            });
+                        searchPlaceBtn.setEnabled(true);
+                        searchPlaceBtn.setText("Search");
+
+                        if (match != null) {
+                            // found in your db — use it
+                            foundPlaceId   = match.getId();
+                            foundPlaceName = match.getString("name");
+
+                            com.google.firebase.firestore.GeoPoint geoPoint =
+                                    match.getGeoPoint("location");
+                            if (geoPoint != null) {
+                                foundLat = geoPoint.getLatitude();
+                                foundLng = geoPoint.getLongitude();
+                            }
+
+                            confirmedPlaceText.setText("✓ " + foundPlaceName + " (from your database)");
+                            confirmedPlaceText.setVisibility(View.VISIBLE);
+
+                        } else {
+                            // not found — show the manual add button
+                            Toast.makeText(getContext(),
+                                    "Place not found in database — add it manually",
+                                    Toast.LENGTH_SHORT).show();
+                            addToPlacesBtn.setVisibility(View.VISIBLE);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        searchPlaceBtn.setEnabled(true);
+                        searchPlaceBtn.setText("Search");
+                        Toast.makeText(getContext(),
+                                "Search failed: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    });
         });
-
         // check if we were opened from GroupDetailsActivity with a preselected group
         if (getArguments() != null) {
             preselectedGroupId = getArguments().getString("groupId");
@@ -254,10 +279,10 @@ private String foundPlaceId = null;
         String timestamp = String.valueOf(System.currentTimeMillis());
 
         // fetch the user's profile to get username and profile picture
-        db.collection("users").document(userId).get()
+        db.collection("Users").document(userId).get()
                 .addOnSuccessListener(userDoc -> {
 
-                    String username       = userDoc.getString("username");
+                    String username       = userDoc.getString("fullname");
                     String profilePicture = userDoc.getString("profilePicture");
 
                     ModelPost post = new ModelPost(

@@ -3,7 +3,8 @@
     <item
         android:id="@+id/share"
         android:title="TravelShare"
-        android:icon="@drawable/home"/>
+        android:icon="@drawable/home"
+        />
     <item
         android:id="@+id/maps"
         android:title="Maps"

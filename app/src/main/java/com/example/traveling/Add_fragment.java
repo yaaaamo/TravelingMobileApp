@@ -23,6 +23,15 @@ public class Add_fragment extends Fragment {
                     .addToBackStack(null)
                     .commit();
         });
+        Button addgroup = view.findViewById(R.id.addgroup);
+        addgroup.setOnClickListener(l ->{
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new Groups())
+                    .addToBackStack(null)
+                    .commit();
+
+        });
 
         return view;
     }
