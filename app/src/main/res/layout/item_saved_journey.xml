@@ -105,6 +105,14 @@
             android:textSize="13sp"
             android:lineSpacingExtra="4dp"/>
 
+        <Button
+            android:id="@+id/btn_view_on_map"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🗺 Voir sur la carte"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#E3F2FD"/>
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -163,12 +163,35 @@ public class SavedJourneysFragment extends Fragment {
                             sheet.show(getParentFragmentManager(), "journey_preview");
                         });
 
+                        cardView.findViewById(R.id.btn_view_on_map).setOnClickListener(v -> {
+                            List<Map<String, Object>> mapPlaces =
+                                    (List<Map<String, Object>>) doc.get("places");
+                            String title_ = doc.getString("title");
+
+                            if (mapPlaces == null || mapPlaces.isEmpty()) {
+                                Toast.makeText(requireContext(),
+                                        "Aucune localisation disponible.",
+                                        Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            Maps mapsFragment = Maps.newInstanceWithJourney(mapPlaces, title_);
+                            requireActivity().getSupportFragmentManager()
+                                    .beginTransaction()
+                                    .replace(R.id.fragment_container, mapsFragment)
+                                    .addToBackStack(null)
+                                    .commit();
+                        });
+
                         listContainer.addView(cardView);
                     }
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(requireContext(),
                                 "Erreur: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+
+
+
 
         return view;
     }
