@@ -105,35 +105,31 @@ public class GroupDetailsActivity extends AppCompatActivity {
     }
 
     private void showManageMembersDialog() {
-        if (groupId == null) return;
+        if (groupId == null || isFinishing() || isDestroyed()) return;
 
-        // fetch current members first
         db.collection("groups").document(groupId)
                 .collection("Members")
                 .get()
                 .addOnSuccessListener(snapshot -> {
+                    if (isFinishing() || isDestroyed()) return;
 
-                    // read username field from each member document
-                    List<String> usernames = new ArrayList<>();
+                    List<String> emails = new ArrayList<>();
+
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        String username = doc.getString("username");
-                        if (username != null) usernames.add(username);
+                        String email = doc.getString("email");
+                        if (email != null && !email.trim().isEmpty()) {
+                            emails.add(email);
+                        }
                     }
 
-                    // build dialog
                     View dialogView = LayoutInflater.from(this)
                             .inflate(R.layout.dialog_manage_members, null);
 
                     TextView membersListView = dialogView.findViewById(R.id.membersList);
-                    EditText addMemberInput  = dialogView.findViewById(R.id.addMemberInput);
-                    Button addMemberButton   = dialogView.findViewById(R.id.addMemberButton);
+                    EditText addMemberInput = dialogView.findViewById(R.id.addMemberInput);
+                    Button addMemberButton = dialogView.findViewById(R.id.addMemberButton);
 
-                    // show current members as a simple text list
-                    if (usernames.isEmpty()) {
-                        membersListView.setText("No members yet.");
-                    } else {
-                        membersListView.setText(String.join("\n", usernames));
-                    }
+                    updateMembersList(membersListView, emails);
 
                     AlertDialog dialog = new AlertDialog.Builder(this)
                             .setTitle("Manage Members")
@@ -142,23 +138,42 @@ public class GroupDetailsActivity extends AppCompatActivity {
                             .create();
 
                     addMemberButton.setOnClickListener(v -> {
-                        String newMemberInput = addMemberInput.getText().toString().trim();
-                        if (newMemberInput.isEmpty()) return;
+                        String emailInput = addMemberInput.getText().toString().trim().toLowerCase();
+
+                        if (emailInput.isEmpty()) {
+                            Toast.makeText(this, "Enter an email", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        addMemberButton.setEnabled(false);
 
                         db.collection("Users")
-                                .whereEqualTo("fullname", newMemberInput)
+                                .whereEqualTo("email", emailInput)
+                                .limit(1)
                                 .get()
                                 .addOnSuccessListener(userSnapshot -> {
+                                    if (isFinishing() || isDestroyed()) return;
+
                                     if (userSnapshot.isEmpty()) {
                                         Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
+                                        addMemberButton.setEnabled(true);
                                         return;
                                     }
 
-                                    String newMemberId = userSnapshot.getDocuments().get(0).getId();
+                                    DocumentSnapshot userDoc = userSnapshot.getDocuments().get(0);
+                                    String newMemberId = userDoc.getId();
+                                    String fetchedEmail = userDoc.getString("email");
+
+                                    final String userEmail;
+                                    if (fetchedEmail == null || fetchedEmail.trim().isEmpty()) {
+                                        userEmail = emailInput;
+                                    } else {
+                                        userEmail = fetchedEmail;
+                                    }
 
                                     HashMap<String, Object> memberData = new HashMap<>();
-                                    memberData.put("username", newMemberInput);
-
+                                    memberData.put("email", userEmail);
+                                    memberData.put("uid", newMemberId);
 
                                     db.collection("groups")
                                             .document(groupId)
@@ -166,20 +181,50 @@ public class GroupDetailsActivity extends AppCompatActivity {
                                             .document(newMemberId)
                                             .set(memberData)
                                             .addOnSuccessListener(unused -> {
-
-
                                                 db.collection("Users").document(newMemberId)
                                                         .update("groupIds", FieldValue.arrayUnion(groupId));
 
-                                                Toast.makeText(this, newMemberInput + " added!", Toast.LENGTH_SHORT).show();
+                                                if (isFinishing() || isDestroyed()) return;
+
+                                                Toast.makeText(this, userEmail + " added!", Toast.LENGTH_SHORT).show();
+
                                                 addMemberInput.setText("");
-                                                dialog.dismiss();
-                                                showManageMembersDialog();
+
+                                                if (!emails.contains(userEmail)) {
+                                                    emails.add(userEmail);
+                                                    updateMembersList(membersListView, emails);
+                                                }
+
+                                                addMemberButton.setEnabled(true);
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                if (isFinishing() || isDestroyed()) return;
+
+                                                Toast.makeText(this, "Failed to add member", Toast.LENGTH_SHORT).show();
+                                                addMemberButton.setEnabled(true);
                                             });
+                                })
+                                .addOnFailureListener(e -> {
+                                    if (isFinishing() || isDestroyed()) return;
+
+                                    Toast.makeText(this, "Failed to search user", Toast.LENGTH_SHORT).show();
+                                    addMemberButton.setEnabled(true);
                                 });
                     });
 
                     dialog.show();
+                })
+                .addOnFailureListener(e -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    Toast.makeText(this, "Failed to load members", Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void updateMembersList(TextView membersListView, List<String> emails) {
+        if (emails == null || emails.isEmpty()) {
+            membersListView.setText("No members yet.");
+        } else {
+            membersListView.setText(String.join("\n", emails));
+        }
     }
 }
