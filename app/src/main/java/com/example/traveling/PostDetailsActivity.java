@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -29,7 +30,7 @@ public class PostDetailsActivity extends AppCompatActivity {
     ImageView profileImage;
     TextView captionView, username, location, country,
             tags, travelType, likes, comments, date;
-    Button likeButton;
+    ImageButton likeButton;
 
     // ← these now live here, not in an adapter
     private FirebaseFirestore db;
@@ -86,6 +87,9 @@ public class PostDetailsActivity extends AppCompatActivity {
                                 .update("comments", FieldValue.increment(1));
                         commentInput.setText(""); // clear input
                     });
+            //notify the user about the new comment
+            String postOwnerId = getIntent().getStringExtra("postOwnerId");
+            NotificationHelper.sendCommentNotification(postOwnerId, username, postId);
         });
         String imageUrl        = getIntent().getStringExtra("imageUrl");
         String captionText     = getIntent().getStringExtra("caption");
@@ -158,12 +162,25 @@ public class PostDetailsActivity extends AppCompatActivity {
                     likeRef.delete();
                     db.collection("posts").document(postId)
                             .update("likes", FieldValue.increment(-1));
+
                     Log.d("LIKES", "removed a like!");
+                    likeButton.setImageResource(
+                            R.drawable.likebutton
+                    );
+
                 } else {
                     likeRef.set(new HashMap<>());
+                    // after likeRef.set(new HashMap<>()) — when liking:
+                    String postOwnerId = getIntent().getStringExtra("postOwnerId");
+                    String currentUsername = auth.getCurrentUser().getEmail(); //!! TO CHANGE WITH USERNAME LATER!
+                    NotificationHelper.sendLikeNotification(postOwnerId, currentUsername, postId);
+                    Log.d("notifications", "sent notif to user: "+ postOwnerId + " " + currentUsername);
                     db.collection("posts").document(postId)
                             .update("likes", FieldValue.increment(1));
                     Log.d("LIKES", "added a like!");
+                    likeButton.setImageResource(
+                            R.drawable.likedd_button
+                    );
                 }
             });
         });
@@ -183,7 +200,6 @@ public class PostDetailsActivity extends AppCompatActivity {
                                 boolean liked = value.getDocuments()
                                         .stream()
                                         .anyMatch(d -> d.getId().equals(uid));
-                                likeButton.setText(liked ? "Liked" : "Like");
                             }
                         }
                     });

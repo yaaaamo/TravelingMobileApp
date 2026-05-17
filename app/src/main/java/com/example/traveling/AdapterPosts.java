@@ -100,6 +100,8 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHold
 
             intent.putExtra("timestamp", post.getTimestamp());
             intent.putExtra("postId", post.getPostId());
+            // AdapterPosts.java — add to intent
+            intent.putExtra("postOwnerId", post.getuserID());
 
 
             holder.itemView.getContext().startActivity(intent);        });

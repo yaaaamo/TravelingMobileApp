@@ -161,6 +161,10 @@ public class GroupDetailsActivity extends AppCompatActivity {
 
                                     HashMap<String, Object> memberData = new HashMap<>();
                                     memberData.put("username", newMemberInput); // ← store username
+                                    //after adding user notify them !!! TO MODIFY LATER
+//                                    NotificationHelper.sendGroupNotification(
+//                                            newMemberId, currentUsername, groupId, groupName);
+
 
                                     db.collection("groups")
                                             .document(groupId)

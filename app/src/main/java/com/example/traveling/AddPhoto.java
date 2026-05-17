@@ -202,8 +202,9 @@ public class AddPhoto extends Fragment {
                     ModelPost post = new ModelPost(
                             username, caption, imageUrl, timestamp,
                             0, 0, profilePicture,
-                            location, country, tags, 0, travelType, groupId);
+                            location, country, tags, 0, travelType, groupId, userId);
 
+                    post.setUserID(auth.getCurrentUser().getUid());
                     db.collection("posts")
                             .add(post)
                             .addOnSuccessListener(ref -> {

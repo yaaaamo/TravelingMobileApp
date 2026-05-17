@@ -71,6 +71,15 @@ import java.util.ArrayList;
                      .addToBackStack(null)
                      .commit();
          });
+         Button notifs = view.findViewById(R.id.notifs);
+         notifs.setOnClickListener(l->{
+             requireActivity().getSupportFragmentManager()
+                     .beginTransaction()
+                     .replace(R.id.fragment_container, new Notifications())
+                     .addToBackStack(null)
+                     .commit();
+
+         });
 
          loadPosts();
 

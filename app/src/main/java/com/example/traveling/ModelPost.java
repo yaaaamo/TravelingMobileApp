@@ -19,6 +19,7 @@ public class ModelPost {
 
     private String travelType;
     private String groupid ;
+    private String userID;
 
     public ModelPost() {
     }
@@ -27,7 +28,7 @@ public class ModelPost {
                      String timestamp, int likes, int comments,
                      String profilePicture, String location,
                      String country, String tags,
-                     int savedBy, String travelType, String groupid) {
+                     int savedBy, String travelType, String groupid, String userID) {
 
         this.username = username;
         this.caption = caption;
@@ -42,6 +43,7 @@ public class ModelPost {
         this.savedBy = savedBy;
         this.travelType = travelType;
         this.groupid = groupid;
+        this.userID = userID;
     }
     public String getPostId() {
         return postId;
@@ -147,4 +149,6 @@ public class ModelPost {
     }
     public String getGroupid(){return this.groupid; }
     public void setGroupid(String groupid){ this.groupid = groupid; }
+    public String getuserID(){return userID;}
+    public void setUserID(String userID){this.userID= userID ; }
 }
