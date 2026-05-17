@@ -96,7 +96,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/brown"
-                android:backgroundTint="@color/mainpink"/>
+                android:backgroundTint="@color/mainpink"
+                />
         </LinearLayout>
 
         <!-- USER INFO -->

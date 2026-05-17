@@ -1,5 +1,6 @@
 package com.example.traveling;
 
+import android.app.AlertDialog;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,6 +12,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -24,14 +26,22 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import android.location.Address;
+import android.location.Geocoder;
+import com.google.firebase.firestore.GeoPoint;
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 public class AddPhoto extends Fragment {
 
     private Uri selectedImageUri;
     private ImageView imageView;
     private Button pickBtn, uploadBtn;
+
     private EditText captionInput, locationInput, countryInput, tagsInput, travelTypeInput;
     private RadioGroup postTargetGroup;
     private Spinner groupSpinner;
@@ -47,6 +57,12 @@ public class AddPhoto extends Fragment {
     // if opened from GroupDetailsActivity, this is pre-set
     private String preselectedGroupId = null;
 
+//for google location
+private String foundPlaceId = null;
+    private double foundLat = 0;
+    private double foundLng = 0;
+    private String foundPlaceName = null;
+    private final PlacesApiService placesApiService = new PlacesApiService();
     private final ActivityResultLauncher<String> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
@@ -76,6 +92,51 @@ public class AddPhoto extends Fragment {
         travelTypeInput = view.findViewById(R.id.travelTypeInput);
         postTargetGroup = view.findViewById(R.id.postTargetGroup);
         groupSpinner    = view.findViewById(R.id.groupSpinner);
+
+        //for google location !!!
+        Button addToPlacesBtn = view.findViewById(R.id.addToPlacesBtn);
+
+        EditText placeSearchInput    = view.findViewById(R.id.placeSearchInput);
+        Button searchPlaceBtn        = view.findViewById(R.id.searchPlaceBtn);
+        TextView confirmedPlaceText  = view.findViewById(R.id.confirmedPlaceText);
+
+        searchPlaceBtn.setOnClickListener(v -> {
+            String query = placeSearchInput.getText().toString().trim();
+            if (query.isEmpty()) {
+                Toast.makeText(getContext(), "Enter a place name", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            searchPlaceBtn.setEnabled(false);
+            searchPlaceBtn.setText("Searching...");
+
+            addToPlacesBtn.setOnClickListener(l -> showAddPlaceDialog(
+                    placeSearchInput.getText().toString().trim()));
+            placesApiService.searchPlace(query, new PlacesApiService.PlaceSearchCallback() {
+                @Override
+                public void onSuccess(PlacesApiService.PlaceSearchResult result) {
+                    foundPlaceId   = result.placeId;
+                    foundLat       = result.lat;
+                    foundLng       = result.lng;
+                    foundPlaceName = result.name;
+
+                    confirmedPlaceText.setText("✓ " + result.name);
+                    confirmedPlaceText.setVisibility(View.VISIBLE);
+                    searchPlaceBtn.setEnabled(true);
+                    searchPlaceBtn.setText("Search");
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    Toast.makeText(getContext(),
+                            "Place not found — you can add it manually",
+                            Toast.LENGTH_SHORT).show();
+                    addToPlacesBtn.setVisibility(View.VISIBLE); // ← show manual add button
+                    searchPlaceBtn.setEnabled(true);
+                    searchPlaceBtn.setText("Search");
+                }
+            });
+        });
 
         // check if we were opened from GroupDetailsActivity with a preselected group
         if (getArguments() != null) {
@@ -203,7 +264,14 @@ public class AddPhoto extends Fragment {
                             username, caption, imageUrl, timestamp,
                             0, 0, profilePicture,
                             location, country, tags, 0, travelType, groupId, userId);
-
+//for google location im trying something
+                    post.setGooglePlaceId(foundPlaceId);
+                    post.setLat(foundLat);
+                    post.setLng(foundLng);
+// use found place name as location if user didn't type one separately
+                    if (foundPlaceName != null && location.isEmpty()) {
+                        post.setLocation(foundPlaceName);
+                    }
                     post.setUserID(auth.getCurrentUser().getUid());
                     db.collection("posts")
                             .add(post)
@@ -221,5 +289,80 @@ public class AddPhoto extends Fragment {
                                         Toast.LENGTH_SHORT).show();
                             });
                 });
+    }
+
+    //Trying something out ?? instead of typing manually lat and long
+    private void showAddPlaceDialog(String prefillName) {
+        View dialogView = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_add_place, null);
+
+        EditText nameInput     = dialogView.findViewById(R.id.placeNameInput);
+        EditText categoryInput = dialogView.findViewById(R.id.placeCategoryInput);
+
+        nameInput.setText(prefillName);
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Add Place to Database")
+                .setView(dialogView)
+                .setPositiveButton("Add", (dialog, which) -> {
+                    String name     = nameInput.getText().toString().trim();
+                    String category = categoryInput.getText().toString().trim();
+
+                    if (name.isEmpty()) {
+                        Toast.makeText(getContext(),
+                                "Enter a place name", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // convert place name to coordinates automatically
+                    try {
+                        Geocoder geocoder = new Geocoder(getContext(), Locale.getDefault());
+                        List<Address> addresses = geocoder.getFromLocationName(name, 1);
+
+                        if (addresses == null || addresses.isEmpty()) {
+                            Toast.makeText(getContext(),
+                                    "Could not find coordinates for this place",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        double lat = addresses.get(0).getLatitude();
+                        double lng = addresses.get(0).getLongitude();
+
+                        HashMap<String, Object> placeData = new HashMap<>();
+                        placeData.put("name", name);
+                        placeData.put("category", category);
+                        placeData.put("location", new GeoPoint(lat, lng));
+                        placeData.put("googlePlaceId", null);
+                        placeData.put("effortLevel", 1);
+                        placeData.put("goodForCold", false);
+                        placeData.put("goodForHeat", false);
+                        placeData.put("goodForRain", false);
+
+                        db.collection("places")
+                                .add(placeData)
+                                .addOnSuccessListener(ref -> {
+                                    foundPlaceId   = ref.getId();
+                                    foundLat       = lat;
+                                    foundLng       = lng;
+                                    foundPlaceName = name;
+
+                                    TextView confirmedPlaceText =
+                                            getView().findViewById(R.id.confirmedPlaceText);
+                                    confirmedPlaceText.setText("✓ " + name + " (added to database)");
+                                    confirmedPlaceText.setVisibility(View.VISIBLE);
+
+                                    Toast.makeText(getContext(),
+                                            "Place added!", Toast.LENGTH_SHORT).show();
+                                });
+
+                    } catch (IOException e) {
+                        Toast.makeText(getContext(),
+                                "Geocoder error: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 }

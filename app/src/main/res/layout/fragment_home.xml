@@ -6,7 +6,15 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".Home">
-
+    <com.google.android.material.appbar.MaterialToolbar android:id="@+id/topAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:elevation="4dp"
+        app:titleTextColor="@color/white"
+        app:logo="@drawable/header"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:android="http://schemas.android.com/apk/res/android" />
     <!-- Main content -->
     <LinearLayout
         android:layout_width="236dp"
@@ -30,18 +38,22 @@
 
         <Button
             android:id="@+id/notifs"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="72dp"
+            android:layout_height="45dp"
             android:layout_margin="16dp"
-            android:background="@drawable/notifs" />
+            android:backgroundTint="@color/white"
+            android:drawableBottom="@drawable/notifs"
+            android:drawableTint="@color/mainpink" />
 
         <Button
             android:id="@+id/addphoto"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="72dp"
+            android:layout_height="45dp"
             android:layout_margin="16dp"
-            android:background="@drawable/addphoto"
-            android:contentDescription="Add photo" />
+            android:backgroundTint="@color/white"
+            android:contentDescription="Add photo"
+            android:drawableBottom="@drawable/addphoto"
+            android:drawableTint="@color/mainpink" />
     </LinearLayout>
 
     <SearchView

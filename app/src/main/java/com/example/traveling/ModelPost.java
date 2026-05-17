@@ -20,6 +20,10 @@ public class ModelPost {
     private String travelType;
     private String groupid ;
     private String userID;
+    private String googlePlaceId;
+    private double lat;
+    private double lng;
+
 
     public ModelPost() {
     }
@@ -151,4 +155,11 @@ public class ModelPost {
     public void setGroupid(String groupid){ this.groupid = groupid; }
     public String getuserID(){return userID;}
     public void setUserID(String userID){this.userID= userID ; }
+    public String getGooglePlaceId() { return googlePlaceId; }
+    public void setGooglePlaceId(String googlePlaceId) { this.googlePlaceId = googlePlaceId; }
+    public double getLat() { return lat; }
+    public void setLat(double lat) { this.lat = lat; }
+    public double getLng() { return lng; }
+    public void setLng(double lng) { this.lng = lng; }
+
 }

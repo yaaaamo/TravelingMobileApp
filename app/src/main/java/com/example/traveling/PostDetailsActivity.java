@@ -1,8 +1,10 @@
 package com.example.traveling;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -103,6 +105,39 @@ public class PostDetailsActivity extends AppCompatActivity {
         int likesCount         = getIntent().getIntExtra("likes", 0);
         int commentsCount      = getIntent().getIntExtra("comments", 0);
         postId                 = getIntent().getStringExtra("postId");
+        //google location
+        // read coordinates
+        double lat            = getIntent().getDoubleExtra("lat", 0);
+        double lng            = getIntent().getDoubleExtra("lng", 0);
+        String googlePlaceId  = getIntent().getStringExtra("googlePlaceId");
+
+// bind and wire directions button
+        Button directionsButton = findViewById(R.id.coordinates);
+
+        if (lat == 0 && lng == 0) {
+            // if no coordinates available :
+            directionsButton.setText("No coordinates available");
+        } else {
+            directionsButton.setVisibility(View.VISIBLE);
+            directionsButton.setText(" " + locationText + "\n" + String.format("%.4f, %.4f", lat, lng));
+            directionsButton.setOnClickListener(v -> {
+                // open Google Maps with coordinates
+                Uri gmmIntentUri = Uri.parse(
+                        "google.navigation:q=" + lat + "," + lng);
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+
+                // fallback to browser if Google Maps not installed
+                if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(mapIntent);
+                } else {
+                    Uri browserUri = Uri.parse(
+                            "https://www.google.com/maps/dir/?api=1&destination="
+                                    + lat + "," + lng);
+                    startActivity(new Intent(Intent.ACTION_VIEW, browserUri));
+                }
+            });
+        }
 
         //TO SHOW EXISTENT COMMENTS!
         db.collection("posts")

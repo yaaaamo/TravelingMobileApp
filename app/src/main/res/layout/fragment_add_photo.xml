@@ -48,6 +48,34 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:hint="Country"/>
+        <!-- PLACE SEARCH — replaces your old locationInput -->
+        <EditText
+            android:id="@+id/placeSearchInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Search a place (e.g. Eiffel Tower, Paris)"/>
+
+        <Button
+            android:id="@+id/searchPlaceBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Search"/>
+        <Button
+            android:id="@+id/addToPlacesBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+ Add this place manually"
+            android:visibility="gone"/>
+
+        <!-- shows the confirmed place name after search -->
+        <TextView
+            android:id="@+id/confirmedPlaceText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#4CAF50"
+            android:visibility="gone"/>
 
         <!-- TAGS -->
         <EditText

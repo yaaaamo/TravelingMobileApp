@@ -25,6 +25,20 @@
                                               <map>
                                                 <entry key="color" value="000000" />
                                                 <entry key="imagePath" value="C:\Users\Kanzy\AppData\Local\Temp\ic_android_black_24dp.xml" />
+                                                <entry key="opacityPercent" value="60" />
+                                              </map>
+                                            </option>
+                                          </PersistentState>
+                                        </value>
+                                      </entry>
+                                      <entry key="image">
+                                        <value>
+                                          <PersistentState>
+                                            <option name="values">
+                                              <map>
+                                                <entry key="color" value="000000" />
+                                                <entry key="imagePath" value="C:\Users\Kanzy\Downloads\Heading 1.svg" />
+                                                <entry key="opacityPercent" value="60" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -52,6 +66,12 @@
                                           </PersistentState>
                                         </value>
                                       </entry>
+                                    </map>
+                                  </option>
+                                  <option name="values">
+                                    <map>
+                                      <entry key="assetType" value="IMAGE" />
+                                      <entry key="imageAsset" value="C:\Users\Kanzy\Downloads\Heading 1.svg" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -141,6 +161,8 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
+                                                <entry key="imagePath" value="C:\Users\Kanzy\Downloads\Heading 1.svg" />
+                                                <entry key="paddingPercent" value="15" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -170,6 +192,13 @@
                                       </entry>
                                     </map>
                                   </option>
+                                  <option name="values">
+                                    <map>
+                                      <entry key="assetType" value="IMAGE" />
+                                      <entry key="imageAsset" value="C:\Users\Kanzy\Downloads\Heading 1.svg" />
+                                      <entry key="outputName" value="travel_icon" />
+                                    </map>
+                                  </option>
                                 </PersistentState>
                               </value>
                             </entry>
@@ -185,6 +214,17 @@
                                               <map>
                                                 <entry key="color" value="000000" />
                                                 <entry key="imagePath" value="C:\Users\Kanzy\AppData\Local\Temp\ic_android_black_24dp.xml" />
+                                              </map>
+                                            </option>
+                                          </PersistentState>
+                                        </value>
+                                      </entry>
+                                      <entry key="image">
+                                        <value>
+                                          <PersistentState>
+                                            <option name="values">
+                                              <map>
+                                                <entry key="color" value="000000" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -212,6 +252,11 @@
                                           </PersistentState>
                                         </value>
                                       </entry>
+                                    </map>
+                                  </option>
+                                  <option name="values">
+                                    <map>
+                                      <entry key="assetType" value="IMAGE" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -332,8 +377,9 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputName" value="notifs" />
-                            <entry key="sourceFile" value="C:\Users\Kanzy\Documents\GitHub\TravelingMobileApp" />
+                            <entry key="assetSourceType" value="FILE" />
+                            <entry key="outputName" value="header" />
+                            <entry key="sourceFile" value="C:\Users\Kanzy\Downloads\Heading 1.svg" />
                           </map>
                         </option>
                       </PersistentState>

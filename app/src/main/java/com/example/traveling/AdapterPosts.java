@@ -102,6 +102,9 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHold
             intent.putExtra("postId", post.getPostId());
             // AdapterPosts.java — add to intent
             intent.putExtra("postOwnerId", post.getuserID());
+            intent.putExtra("lat", post.getLat());
+            intent.putExtra("lng", post.getLng());
+            intent.putExtra("googlePlaceId", post.getGooglePlaceId());
 
 
             holder.itemView.getContext().startActivity(intent);        });
@@ -109,36 +112,36 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHold
                 .load(post.getProfilePicture())
                 .into(holder.profileImage);
 
-            holder.likeButton.setOnClickListener(v -> {
-                if (auth.getCurrentUser() == null) {Log.d("NULLVALUE", "oops currentUser is null"); return;}
-
-                String currentUserId = auth.getCurrentUser().getUid();
-                String postId = post.getPostId();
-
-                if (postId == null) {Log.d("NULLVALUE", "oops postID is null") ; return;}
-
-                DocumentReference likeRef = db
-                        .collection("posts")
-                        .document(postId)
-                        .collection("Likes")
-                        .document(currentUserId);
-
-                likeRef.get().addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        likeRef.delete();
-                        db.collection("posts").document(postId)
-                                .update("likes", FieldValue.increment(-1));  // unlike
-                        Log.d("LIKES", "removed a like!");
-                    } else {
-                        likeRef.set(new HashMap<>());
-                        // increment the likes count on the post
-                        db.collection("posts").document(postId)
-                                .update("likes", FieldValue.increment(1));
-                        Log.d("LIKES", "added a like!");
-
-                    }
-                });
-            });
+//            holder.likeButton.setOnClickListener(v -> {
+//                if (auth.getCurrentUser() == null) {Log.d("NULLVALUE", "oops currentUser is null"); return;}
+//
+//                String currentUserId = auth.getCurrentUser().getUid();
+//                String postId = post.getPostId();
+//
+//                if (postId == null) {Log.d("NULLVALUE", "oops postID is null") ; return;}
+//
+//                DocumentReference likeRef = db
+//                        .collection("posts")
+//                        .document(postId)
+//                        .collection("Likes")
+//                        .document(currentUserId);
+//
+//                likeRef.get().addOnSuccessListener(documentSnapshot -> {
+//                    if (documentSnapshot.exists()) {
+//                        likeRef.delete();
+//                        db.collection("posts").document(postId)
+//                                .update("likes", FieldValue.increment(-1));  // unlike
+//                        Log.d("LIKES", "removed a like!");
+//                    } else {
+//                        likeRef.set(new HashMap<>());
+//                        // increment the likes count on the post
+//                        db.collection("posts").document(postId)
+//                                .update("likes", FieldValue.increment(1));
+//                        Log.d("LIKES", "added a like!");
+//
+//                    }
+//                });
+//            });
 
         if (post.getPostId() != null) {
             db.collection("posts")               // ← match exact case you use when writing
