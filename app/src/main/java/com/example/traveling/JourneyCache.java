@@ -58,4 +58,26 @@ public class JourneyCache {
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
+
+    private static final String KEY_PLACE_PHOTOS = "place_photos_";
+
+
+    public void savePlacePhotos(String placeName, List<String> photoRefs) {
+        String json = gson.toJson(photoRefs);
+        prefs.edit().putString(KEY_PLACE_PHOTOS + placeName.hashCode(), json).apply();
+    }
+
+
+    public List<String> loadPlacePhotos(String placeName) {
+        String json = prefs.getString(KEY_PLACE_PHOTOS + placeName.hashCode(), null);
+        if (json == null) return new ArrayList<>();
+        Type type = new TypeToken<List<String>>() {}.getType();
+        List<String> result = gson.fromJson(json, type);
+        return result != null ? result : new ArrayList<>();
+    }
+
+
+    public boolean hasPlacePhotos(String placeName) {
+        return prefs.contains(KEY_PLACE_PHOTOS + placeName.hashCode());
+    }
 }

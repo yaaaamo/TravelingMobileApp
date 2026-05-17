@@ -1,6 +1,7 @@
 package com.example.traveling;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -163,6 +164,7 @@ public class Maps extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    @SuppressLint("PotentialBehaviorOverride")
     private void showJourneyOnMap() {
         if (mMap == null || journeyPlaces == null || journeyPlaces.isEmpty()) return;
 
@@ -203,7 +205,20 @@ public class Maps extends Fragment implements OnMapReadyCallback {
                                     : i == journeyPlaces.size() - 1
                                     ? BitmapDescriptorFactory.HUE_RED
                                     : BitmapDescriptorFactory.HUE_VIOLET)));
+
         }
+
+        mMap.setOnMarkerClickListener(marker -> {
+            for (Map<String, Object> place : journeyPlaces) {
+                Object nameObj = place.get("name");
+                if (nameObj != null && nameObj.toString().equals(marker.getTitle())) {
+                    showPlaceDetails(place);
+                    break;
+                }
+            }
+            return true;
+        });
+
 
         if (!hasLocation) return;
 
@@ -292,6 +307,11 @@ public class Maps extends Fragment implements OnMapReadyCallback {
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 18f));
             }
         });
+    }
+
+    private void showPlaceDetails(Map<String, Object> place) {
+        PlaceDetailBottomSheet sheet = PlaceDetailBottomSheet.newInstance(place);
+        sheet.show(getChildFragmentManager(), "place_detail");
     }
 
 

@@ -149,12 +149,19 @@ public class RouteDetail extends Fragment {
         );
 
         Button btnSaveJourney = view.findViewById(R.id.btn_save_journey);
-        btnSaveJourney.setOnClickListener(v -> saveJourney(currentOption, btnSaveJourney));
-
         Button btnExportPdf = view.findViewById(R.id.btn_export_pdf);
-        btnExportPdf.setOnClickListener(v -> exportAsPdf(currentOption));
-
         Button btnShare = view.findViewById(R.id.btn_share_journey);
+
+
+        if (!JourneyCache.isOnline(requireContext())) {
+            btnSaveJourney.setVisibility(View.GONE);
+
+        } else {
+            btnSaveJourney.setOnClickListener(v ->
+                    saveJourney(currentOption, btnSaveJourney));
+        }
+
+        btnExportPdf.setOnClickListener(v -> exportAsPdf(currentOption));
         btnShare.setOnClickListener(v -> shareJourney(currentOption));
 
         return view;
