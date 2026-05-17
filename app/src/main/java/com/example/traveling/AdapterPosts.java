@@ -40,7 +40,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHold
         //for search bar
 
         this.postList = postList;
-        this.postListFull = new ArrayList<>(postList); // ← keep a copy
+        this.postListFull = new ArrayList<>(postList); // keep a copy
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
 

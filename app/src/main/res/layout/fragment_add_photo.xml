@@ -1,41 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".AddPhoto">
+    android:layout_height="match_parent">
 
-    <!-- TODO: Update blank fragment layout -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center"
-        tools:ignore="MissingConstraints">
+        android:padding="16dp">
 
-        <Button
-            android:id="@+id/uploadBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="31dp"
-            android:text="Upload Image"
-            />
-
+        <!-- PICK IMAGE BUTTON -->
         <Button
             android:id="@+id/pickBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pick Image"/>
+
+        <!-- IMAGE PREVIEW -->
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:layout_marginTop="8dp"
+            android:scaleType="centerCrop"
+            android:background="#f0f0f0"/>
+
+        <!-- CAPTION -->
+        <EditText
+            android:id="@+id/captionInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Caption"/>
+
+        <!-- LOCATION -->
+        <EditText
+            android:id="@+id/locationInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Location (city)"/>
+
+        <!-- COUNTRY -->
+        <EditText
+            android:id="@+id/countryInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Country"/>
+
+        <!-- TAGS -->
+        <EditText
+            android:id="@+id/tagsInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Tags (e.g. #beach #adventure)"/>
+
+        <!-- TRAVEL TYPE -->
+        <EditText
+            android:id="@+id/travelTypeInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Travel Type (e.g. Solo, Family, Couple)"/>
+
+        <!-- POST TO: PUBLIC OR GROUP -->
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="420dp"
-            android:text="Pick Image"
-            />
+            android:layout_marginTop="16dp"
+            android:text="Post to:"
+            android:textStyle="bold"/>
+
+        <RadioGroup
+            android:id="@+id/postTargetGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <RadioButton
+                android:id="@+id/radioPublic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="Public"/>
+
+            <RadioButton
+                android:id="@+id/radioGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:text="A Group"/>
+
+        </RadioGroup>
+
+        <!-- GROUP PICKER — hidden by default, shown when "A Group" is selected -->
+        <Spinner
+            android:id="@+id/groupSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"/>
+
+        <!-- UPLOAD BUTTON -->
+        <Button
+            android:id="@+id/uploadBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Post"/>
 
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="100dp"
-        android:layout_height="250dp"
-        android:layout_marginEnd="76dp"
-        android:scaleType="centerCrop"
-        tools:ignore="MissingConstraints" />
-
-</FrameLayout>
+</ScrollView>

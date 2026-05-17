@@ -34,6 +34,7 @@
 
         <activity android:name=".SignUpActivity"> </activity>
         <activity android:name=".PostDetailsActivity"> </activity>
+        <activity android:name=".GroupDetailsActivity"/>
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">

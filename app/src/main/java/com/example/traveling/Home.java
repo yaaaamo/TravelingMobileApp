@@ -82,6 +82,7 @@ import java.util.ArrayList;
          FirebaseFirestore db = FirebaseFirestore.getInstance();
 
          db.collection("posts")
+                 .whereEqualTo("groupid", null)
                  .addSnapshotListener((value, error) -> {
 
                      if (error != null) {

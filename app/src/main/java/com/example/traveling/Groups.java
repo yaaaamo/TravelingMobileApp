@@ -71,6 +71,7 @@ public class Groups extends Fragment {
                     if (auth.getCurrentUser() == null) return;
 
                     String userId    = auth.getCurrentUser().getUid();
+                    String username = auth.getCurrentUser().getDisplayName();
                     String timestamp = String.valueOf(System.currentTimeMillis());
 
                     ModelGroup group = new ModelGroup(name, description, userId, timestamp);

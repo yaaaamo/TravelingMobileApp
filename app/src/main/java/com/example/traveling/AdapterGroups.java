@@ -33,7 +33,7 @@ public class AdapterGroups extends RecyclerView.Adapter<AdapterGroups.GroupViewH
         holder.name.setText(group.getName());
         holder.description.setText(group.getDescription());
 
-        /*// clicking a group opens its detail page
+        //clicking a group opens its detail page
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(holder.itemView.getContext(),
                     GroupDetailsActivity.class);
@@ -41,8 +41,7 @@ public class AdapterGroups extends RecyclerView.Adapter<AdapterGroups.GroupViewH
             intent.putExtra("groupName", group.getName());
             intent.putExtra("groupDescription", group.getDescription());
             holder.itemView.getContext().startActivity(intent);
-        });*/
-    }
+        });    }
 
     @Override
     public int getItemCount() { return groupList.size(); }
