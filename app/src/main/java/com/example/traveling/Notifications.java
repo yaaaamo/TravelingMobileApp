@@ -50,7 +50,7 @@ public class Notifications extends Fragment {
     }
 
     private void loadNotifications(String userId) {
-        db.collection("users")
+        db.collection("Users")
                 .document(userId)
                 .collection("notifications")
                 .orderBy("timestamp", Query.Direction.DESCENDING)

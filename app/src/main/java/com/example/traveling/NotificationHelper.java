@@ -17,7 +17,7 @@ public class NotificationHelper {
                 "like", message, postId, null,
                 String.valueOf(System.currentTimeMillis()));
 
-        db.collection("users")
+        db.collection("Users")
                 .document(postOwnerId)
                 .collection("notifications")
                 .add(notification);
@@ -34,7 +34,7 @@ public class NotificationHelper {
                 "comment", message, postId, null,
                 String.valueOf(System.currentTimeMillis()));
 
-        db.collection("users")
+        db.collection("Users")
                 .document(postOwnerId)
                 .collection("notifications")
                 .add(notification);
@@ -52,7 +52,7 @@ public class NotificationHelper {
                 "group", message, null, groupId,
                 String.valueOf(System.currentTimeMillis()));
 
-        db.collection("users")
+        db.collection("Users")
                 .document(addedUserId)
                 .collection("notifications")
                 .add(notification);

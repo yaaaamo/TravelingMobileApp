@@ -55,14 +55,14 @@ public class Profile extends Fragment {
                             postsCount.setText(String.valueOf(snap.size())));
 
 
-            db.collection("users").document(uid)
+            db.collection("Users").document(uid)
                     .collection("savedJourneys")
                     .get()
                     .addOnSuccessListener(snap ->
                             journeysCount.setText(String.valueOf(snap.size())));
 
 
-            db.collection("users").document(uid)
+            db.collection("Users").document(uid)
                     .collection("savedJourneys")
                     .whereEqualTo("liked", true)
                     .get()

@@ -81,7 +81,7 @@ public class LikedJourneysFragment extends Fragment {
         emptyText.setVisibility(View.GONE);
 
         FirebaseFirestore.getInstance()
-                .collection("users")
+                .collection("Users")
                 .document(user.getUid())
                 .collection("savedJourneys")
                 .whereEqualTo(liked ? "liked" : "disliked", true)

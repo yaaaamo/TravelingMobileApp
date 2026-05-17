@@ -14,10 +14,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Groups extends Fragment {
 
@@ -80,12 +85,19 @@ public class Groups extends Fragment {
                     db.collection("groups")
                             .add(group)
                             .addOnSuccessListener(ref -> {
-                                // add creator as first member
+                                String newGroupId = ref.getId();
+
                                 db.collection("groups")
-                                        .document(ref.getId())
+                                        .document(newGroupId)
                                         .collection("Members")
                                         .document(userId)
                                         .set(new java.util.HashMap<>());
+
+
+                                Map<String, Object> data = new HashMap<>();
+                                data.put("groupIds", FieldValue.arrayUnion(newGroupId));
+                                db.collection("Users").document(userId)
+                                        .set(data, SetOptions.merge());
                             });
                 })
                 .setNegativeButton("Cancel", null)
@@ -93,19 +105,44 @@ public class Groups extends Fragment {
     }
 
     private void loadGroups() {
-        db.collection("groups")
-                .addSnapshotListener((value, error) -> {
-                    if (value == null) return;
+        if (auth.getCurrentUser() == null) return;
+        String currentUserId = auth.getCurrentUser().getUid();
 
-                    groupList.clear();
-                    for (DocumentSnapshot doc : value.getDocuments()) {
-                        ModelGroup group = doc.toObject(ModelGroup.class);
-                        if (group != null) {
-                            group.setGroupId(doc.getId());
-                            groupList.add(group);
-                        }
+        db.collection("Users").document(currentUserId)
+                .addSnapshotListener((userDoc, error) -> {
+                    if (error != null) return;
+                    if (userDoc == null || !userDoc.exists()) return;
+
+                    List<String> groupIds = (List<String>) userDoc.get("groupIds");
+                    if (groupIds == null || groupIds.isEmpty()) {
+                        groupList.clear();
+                        adapter.notifyDataSetChanged();
+                        return;
                     }
-                    adapter.notifyDataSetChanged();
+
+
+                    List<String> safeGroupIds = groupIds.size() > 10
+                            ? groupIds.subList(0, 10)
+                            : groupIds;
+
+                    db.collection("groups")
+                            .whereIn(FieldPath.documentId(), safeGroupIds)
+                            .get()
+                            .addOnSuccessListener(value -> {
+                                if (value == null) return;
+                                groupList.clear();
+                                for (DocumentSnapshot doc : value.getDocuments()) {
+                                    ModelGroup group = doc.toObject(ModelGroup.class);
+                                    if (group != null) {
+                                        group.setGroupId(doc.getId());
+                                        groupList.add(group);
+                                    }
+                                }
+                                adapter.notifyDataSetChanged();
+                            })
+                            .addOnFailureListener(e -> {
+                                android.util.Log.e("Groups", "loadGroups error: " + e.getMessage());
+                            });
                 });
     }
 }

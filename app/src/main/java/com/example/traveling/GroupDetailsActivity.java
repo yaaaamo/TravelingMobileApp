@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -140,30 +141,23 @@ public class GroupDetailsActivity extends AppCompatActivity {
                             .setNegativeButton("Close", null)
                             .create();
 
-                    // add member by userId
                     addMemberButton.setOnClickListener(v -> {
                         String newMemberInput = addMemberInput.getText().toString().trim();
                         if (newMemberInput.isEmpty()) return;
 
-                        // look up user by username in Firestore
-                        db.collection("users")
-                                .whereEqualTo("username", newMemberInput)
+                        db.collection("Users")
+                                .whereEqualTo("fullname", newMemberInput)
                                 .get()
                                 .addOnSuccessListener(userSnapshot -> {
                                     if (userSnapshot.isEmpty()) {
-                                        Toast.makeText(this,
-                                                "User not found", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
                                         return;
                                     }
 
-                                    String newMemberId = userSnapshot
-                                            .getDocuments().get(0).getId();
+                                    String newMemberId = userSnapshot.getDocuments().get(0).getId();
 
                                     HashMap<String, Object> memberData = new HashMap<>();
-                                    memberData.put("username", newMemberInput); // ← store username
-                                    //after adding user notify them !!! TO MODIFY LATER
-//                                    NotificationHelper.sendGroupNotification(
-//                                            newMemberId, currentUsername, groupId, groupName);
+                                    memberData.put("username", newMemberInput);
 
 
                                     db.collection("groups")
@@ -172,12 +166,14 @@ public class GroupDetailsActivity extends AppCompatActivity {
                                             .document(newMemberId)
                                             .set(memberData)
                                             .addOnSuccessListener(unused -> {
-                                                Toast.makeText(this,
-                                                        newMemberInput + " added!",
-                                                        Toast.LENGTH_SHORT).show();
+
+
+                                                db.collection("Users").document(newMemberId)
+                                                        .update("groupIds", FieldValue.arrayUnion(groupId));
+
+                                                Toast.makeText(this, newMemberInput + " added!", Toast.LENGTH_SHORT).show();
                                                 addMemberInput.setText("");
                                                 dialog.dismiss();
-                                                // reopen to refresh list
                                                 showManageMembersDialog();
                                             });
                                 });

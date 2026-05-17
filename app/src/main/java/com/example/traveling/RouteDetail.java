@@ -417,7 +417,7 @@ public class RouteDetail extends Fragment {
         }
 
         FirebaseFirestore.getInstance()
-                .collection("users")
+                .collection("Users")
                 .document(user.getUid())
                 .collection("savedJourneys")
                 .add(journeyData)

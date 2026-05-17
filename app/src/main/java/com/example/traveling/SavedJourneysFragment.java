@@ -57,7 +57,7 @@ public class SavedJourneysFragment extends Fragment {
         }
 
         FirebaseFirestore.getInstance()
-                .collection("users")
+                .collection("Users")
                 .document(user.getUid())
                 .collection("savedJourneys")
                 .orderBy("savedAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
