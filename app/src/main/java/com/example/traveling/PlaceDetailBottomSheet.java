@@ -35,7 +35,7 @@ import okhttp3.Response;
 
 public class PlaceDetailBottomSheet extends BottomSheetDialogFragment {
 
-    private static final String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
+    private static final String API_KEY = BuildConfig.GOOGLE_API_KEY;
     private Map<String, Object> placeData;
     private final OkHttpClient client = new OkHttpClient();
 

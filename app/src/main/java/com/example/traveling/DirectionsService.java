@@ -24,9 +24,7 @@ public class DirectionsService {
 
     private static final String TAG = "DirectionsService";
     private static final String BASE_URL = "https://maps.googleapis.com/maps/api/directions/json";
-
-    // in production put it in BuildConfig
-    private static final String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
+    private static final String API_KEY = BuildConfig.GOOGLE_API_KEY;
 
     private final OkHttpClient httpClient = new OkHttpClient();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -40,7 +38,7 @@ public class DirectionsService {
                                   String mode, RouteCallback callback) {
 
         if (waypoints == null || waypoints.isEmpty()) {
-            callback.onFailure(new IllegalArgumentException("Waypoints boş olamaz"));
+            callback.onFailure(new IllegalArgumentException("Waypoints can't be empty"));
             return;
         }
 
@@ -109,7 +107,7 @@ public class DirectionsService {
     private RouteDetails parseResponse(String jsonBody) throws Exception {
         JSONObject root = new JSONObject(jsonBody);
 
-        // Status kontrolü
+
         String status = root.optString("status", "UNKNOWN");
         if (!"OK".equals(status)) {
             String errorMessage = root.optString("error_message", "Status: " + status);
@@ -123,13 +121,13 @@ public class DirectionsService {
 
         JSONObject route = routes.getJSONObject(0);
 
-        // 1. Polyline'ı decode et
+
         String encodedPolyline = route
                 .getJSONObject("overview_polyline")
                 .getString("points");
         List<LatLng> polylinePoints = PolyUtil.decode(encodedPolyline);
 
-        // 2. Optimize edilmiş waypoint sırası
+
         List<Integer> waypointOrder = new ArrayList<>();
         if (route.has("waypoint_order")) {
             JSONArray order = route.getJSONArray("waypoint_order");

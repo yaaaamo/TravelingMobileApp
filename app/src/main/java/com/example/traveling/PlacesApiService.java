@@ -18,7 +18,7 @@ import okhttp3.Response;
 public class PlacesApiService {
 
     private static final String TAG = "PlacesApiService";
-    private static final String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
+    private static final String API_KEY = BuildConfig.GOOGLE_API_KEY;
     private static final String BASE_URL = "https://maps.googleapis.com/maps/api/place/textsearch/json";
 
     private final OkHttpClient client = new OkHttpClient();

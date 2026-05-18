@@ -447,7 +447,7 @@ public class RouteDetail extends Fragment {
         if (savedInflater == null || timelineContainer == null) return;
 
 
-        String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
+        String API_KEY = BuildConfig.GOOGLE_API_KEY;
 
         title.setText("Your " + option.getTitle() + " Escape");
         description.setText("A curated journey through " + option.getPlaces().size()

@@ -17,7 +17,7 @@ import java.util.List;
 public class RouteOptionAdapter
         extends RecyclerView.Adapter<RouteOptionAdapter.RouteViewHolder> {
 
-    private static final String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
+    private static final String API_KEY = BuildConfig.GOOGLE_API_KEY;
 
     public interface OnSelectListener {
         void onSelect(RouteOption option);
