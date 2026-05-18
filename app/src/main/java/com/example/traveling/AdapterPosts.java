@@ -14,38 +14,34 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHolder> {
 
-    private FirebaseFirestore db;
-    private FirebaseAuth auth;
-    private List<ModelPost> postList;
-    private List<ModelPost> postListFull;
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
 
-    // Group context — set these to enable the delete-from-group button
-    private String groupId      = null;
-    private String currentUserId = null;
+    private final List<ModelPost> postList;
+    private final List<ModelPost> postListFull;
 
-    /** Normal constructor — used in Home feed */
+    private String groupId;
+    private String currentUserId;
+
     public AdapterPosts(List<ModelPost> postList) {
-        this.postList     = postList;
+        this.postList = postList;
         this.postListFull = new ArrayList<>(postList);
-        db   = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
     }
 
-    /** Group constructor — shows delete button for own posts */
     public AdapterPosts(List<ModelPost> postList, String groupId, String currentUserId) {
         this(postList);
-        this.groupId       = groupId;
+        this.groupId = groupId;
         this.currentUserId = currentUserId;
     }
+
+    // ───────────────────────────── VIEW HOLDER ─────────────────────────────
 
     @NonNull
     @Override
@@ -55,155 +51,128 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHold
         return new PostViewHolder(view);
     }
 
+    // ───────────────────────────── BIND ─────────────────────────────
+
     @Override
     public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
+
         ModelPost post = postList.get(position);
 
-        holder.username.setText(post.getUsername());
-        holder.caption.setText(post.getCaption());
-        holder.location.setText(post.getLocation() + ", " + post.getCountry());
-        holder.likes.setText(post.getLikes() + " Likes");
-        holder.comments.setText(post.getComments() + " Comments");
-        holder.tags.setText(post.getTags());
-        holder.travelType.setText(post.getTravelType());
+        bindPostData(holder, post);
+        bindImages(holder, post);
+        bindClicks(holder, post);
+        bindDeleteButton(holder, post);
+        bindLikesListener(holder, post);
+    }
 
-        Glide.with(holder.itemView.getContext())
-                .load(post.getImageUrl())
-                .into(holder.image);
+    // ───────────────────────────── CLEAN METHODS ─────────────────────────────
 
-            Intent intent = new Intent(holder.itemView.getContext(),
-                    PostDetailsActivity.class);
+    private void bindPostData(PostViewHolder h, ModelPost p) {
+        h.username.setText(p.getUsername());
+        h.caption.setText(p.getCaption());
+        h.location.setText(p.getLocation() + ", " + p.getCountry());
+        h.likes.setText(p.getLikes() + " Likes");
+        h.comments.setText(p.getComments() + " Comments");
+        h.tags.setText(p.getTags());
+        h.travelType.setText(p.getTravelType());
+    }
 
-            intent.putExtra("username", post.getUsername());
-            intent.putExtra("caption", post.getCaption());
-            intent.putExtra("imageUrl", post.getImageUrl());
+    private void bindImages(PostViewHolder h, ModelPost p) {
+        Glide.with(h.itemView.getContext())
+                .load(p.getImageUrl())
+                .into(h.image);
 
-            intent.putExtra("profilePicture", post.getProfilePicture());
+        Glide.with(h.itemView.getContext())
+                .load(p.getProfilePicture())
+                .into(h.profileImage);
+    }
 
-            intent.putExtra("location", post.getLocation());
-            intent.putExtra("country", post.getCountry());
+    private void bindClicks(PostViewHolder h, ModelPost p) {
+        h.itemView.setOnClickListener(v -> openPost(h, p));
+    }
 
-            intent.putExtra("tags", post.getTags());
+    private void openPost(PostViewHolder h, ModelPost p) {
+        Intent intent = new Intent(h.itemView.getContext(), PostDetailsActivity.class);
 
-            intent.putExtra("travelType", post.getTravelType());
+        intent.putExtra("username", p.getUsername());
+        intent.putExtra("caption", p.getCaption());
+        intent.putExtra("imageUrl", p.getImageUrl());
+        intent.putExtra("profilePicture", p.getProfilePicture());
+        intent.putExtra("location", p.getLocation());
+        intent.putExtra("country", p.getCountry());
+        intent.putExtra("tags", p.getTags());
+        intent.putExtra("travelType", p.getTravelType());
+        intent.putExtra("likes", p.getLikes());
+        intent.putExtra("comments", p.getComments());
+        intent.putExtra("timestamp", p.getTimestamp());
+        intent.putExtra("postId", p.getPostId());
+        intent.putExtra("postOwnerId", p.getuserID());
+        intent.putExtra("lat", p.getLat());
+        intent.putExtra("lng", p.getLng());
+        intent.putExtra("googlePlaceId", p.getGooglePlaceId());
+        intent.putExtra("groupId", p.getGroupid());
 
-            intent.putExtra("likes", post.getLikes());
+        h.itemView.getContext().startActivity(intent);
+    }
 
-            intent.putExtra("comments", post.getComments());
+    private void bindDeleteButton(PostViewHolder h, ModelPost p) {
 
-            intent.putExtra("timestamp", post.getTimestamp());
-            intent.putExtra("postId", post.getPostId());
-            // AdapterPosts.java — add to intent
-            intent.putExtra("postOwnerId", post.getuserID());
-            intent.putExtra("lat", post.getLat());
-            intent.putExtra("lng", post.getLng());
-            intent.putExtra("googlePlaceId", post.getGooglePlaceId());
-            intent.putExtra("groupId", post.getGroupid());
-
-
-            holder.itemView.getContext().startActivity(intent);        
-        Glide.with(holder.itemView.getContext())
-                .load(post.getProfilePicture())
-                .into(holder.profileImage);
-
-        // Delete from group button
         boolean isGroupContext = groupId != null;
         boolean isOwner = currentUserId != null
-                && currentUserId.equals(post.getuserID());
+                && currentUserId.equals(p.getuserID());
 
         if (isGroupContext && isOwner) {
-            holder.btnDeleteFromGroup.setVisibility(View.VISIBLE);
-            holder.btnDeleteFromGroup.setOnClickListener(v -> {
-                // Show confirmation dialog
-                new android.app.AlertDialog.Builder(holder.itemView.getContext())
+            h.btnDeleteFromGroup.setVisibility(View.VISIBLE);
+
+            h.btnDeleteFromGroup.setOnClickListener(v -> {
+                new android.app.AlertDialog.Builder(h.itemView.getContext())
                         .setTitle("Remove from group")
-                        .setMessage("Remove this post from the group? It will still be visible on your profile.")
-                        .setPositiveButton("Remove", (dialog, which) -> {
-                            if (post.getPostId() == null) return;
-                            // Set groupid to null → post leaves the group, stays public
-                            db.collection("posts")
-                                    .document(post.getPostId())
-                                    .update("groupid", null)
-                                    .addOnSuccessListener(unused -> {
-                                        int pos = holder.getAdapterPosition();
-                                        if (pos != RecyclerView.NO_ID) {
-                                            postList.remove(pos);
-                                            postListFull.remove(post);
-                                            notifyItemRemoved(pos);
-                                        }
-                                    })
-                                    .addOnFailureListener(e ->
-                                            android.widget.Toast.makeText(
-                                                    holder.itemView.getContext(),
-                                                    "Failed: " + e.getMessage(),
-                                                    android.widget.Toast.LENGTH_SHORT).show());
-                        })
+                        .setMessage("Remove this post from the group?")
+                        .setPositiveButton("Remove", (d, w) -> removeFromGroup(h, p))
                         .setNegativeButton("Cancel", null)
                         .show();
             });
+
         } else {
-            holder.btnDeleteFromGroup.setVisibility(View.GONE);
-        }
-
-        // Open post details on click
-        holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(holder.itemView.getContext(),
-                    PostDetailsActivity.class);
-            intent.putExtra("username",     post.getUsername());
-            intent.putExtra("caption",      post.getCaption());
-            intent.putExtra("imageUrl",     post.getImageUrl());
-            intent.putExtra("profilePicture", post.getProfilePicture());
-            intent.putExtra("location",     post.getLocation());
-            intent.putExtra("country",      post.getCountry());
-            intent.putExtra("tags",         post.getTags());
-            intent.putExtra("travelType",   post.getTravelType());
-            intent.putExtra("likes",        post.getLikes());
-            intent.putExtra("comments",     post.getComments());
-            intent.putExtra("timestamp",    post.getTimestamp());
-            intent.putExtra("postId",       post.getPostId());
-            intent.putExtra("postOwnerId",  post.getuserID());
-            intent.putExtra("lat",          post.getLat());
-            intent.putExtra("lng",          post.getLng());
-            intent.putExtra("googlePlaceId", post.getGooglePlaceId());
-            holder.itemView.getContext().startActivity(intent);
-        });
-
-        // Live like count
-        if (post.getPostId() != null) {
-            db.collection("posts")
-                    .document(post.getPostId())
-                    .collection("Likes")
-                    .addSnapshotListener((value, error) -> {
-                        if (value != null) {
-                            holder.likes.setText(value.size() + " Likes");
-                        }
-                    });
+            h.btnDeleteFromGroup.setVisibility(View.GONE);
         }
     }
+
+    private void removeFromGroup(PostViewHolder h, ModelPost p) {
+        if (p.getPostId() == null) return;
+
+        db.collection("posts")
+                .document(p.getPostId())
+                .update("groupid", null)
+                .addOnSuccessListener(unused -> {
+                    int pos = h.getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION) {
+                        postList.remove(pos);
+                        postListFull.remove(p);
+                        notifyItemRemoved(pos);
+                    }
+                });
+    }
+
+    // ⚠️ NOTE: This is still inefficient (Firestore listener per item)
+    private void bindLikesListener(PostViewHolder h, ModelPost p) {
+        if (p.getPostId() == null) return;
+
+        db.collection("posts")
+                .document(p.getPostId())
+                .collection("Likes")
+                .addSnapshotListener((value, error) -> {
+                    if (value != null) {
+                        h.likes.setText(value.size() + " Likes");
+                    }
+                });
+    }
+
+    // ───────────────────────────── BASIC ─────────────────────────────
 
     @Override
     public int getItemCount() {
         return postList.size();
-    }
-
-    // ── Search filter ─────────────────────────────────────────────────────────
-
-    public void filter(String query) {
-        postList.clear();
-        if (query.isEmpty()) {
-            postList.addAll(postListFull);
-        } else {
-            String lowerQuery = query.toLowerCase().trim();
-            for (ModelPost post : postListFull) {
-                if ((post.getLocation()   != null && post.getLocation().toLowerCase().contains(lowerQuery)) ||
-                        (post.getTags()       != null && post.getTags().toLowerCase().contains(lowerQuery))     ||
-                        (post.getTravelType() != null && post.getTravelType().toLowerCase().contains(lowerQuery)) ||
-                        (post.getCountry()    != null && post.getCountry().toLowerCase().contains(lowerQuery))) {
-                    postList.add(post);
-                }
-            }
-        }
-        notifyDataSetChanged();
     }
 
     public void updateFullList(List<ModelPost> newList) {
@@ -211,27 +180,50 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHold
         postListFull.addAll(newList);
     }
 
-    // ── ViewHolder ────────────────────────────────────────────────────────────
+    public void filter(String query) {
+        postList.clear();
+
+        if (query.isEmpty()) {
+            postList.addAll(postListFull);
+        } else {
+            String q = query.toLowerCase().trim();
+
+            for (ModelPost p : postListFull) {
+                if ((p.getLocation() != null && p.getLocation().toLowerCase().contains(q)) ||
+                        (p.getTags() != null && p.getTags().toLowerCase().contains(q)) ||
+                        (p.getTravelType() != null && p.getTravelType().toLowerCase().contains(q)) ||
+                        (p.getCountry() != null && p.getCountry().toLowerCase().contains(q))) {
+
+                    postList.add(p);
+                }
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    // ───────────────────────────── VIEW HOLDER ─────────────────────────────
 
     static class PostViewHolder extends RecyclerView.ViewHolder {
-        TextView   username, caption, location, likes, comments, tags, travelType;
-        ImageView  image, profileImage;
-        Button     likeButton;
+
+        TextView username, caption, location, likes, comments, tags, travelType;
+        ImageView image, profileImage;
+        Button likeButton;
         ImageButton btnDeleteFromGroup;
 
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
-            username            = itemView.findViewById(R.id.postUsername);
-            caption             = itemView.findViewById(R.id.postCaption);
-            image               = itemView.findViewById(R.id.postImage);
-            profileImage        = itemView.findViewById(R.id.profileImage);
-            location            = itemView.findViewById(R.id.postLocation);
-            likes               = itemView.findViewById(R.id.postLikes);
-            comments            = itemView.findViewById(R.id.postComments);
-            tags                = itemView.findViewById(R.id.postTags);
-            travelType          = itemView.findViewById(R.id.postTravelType);
-            likeButton          = itemView.findViewById(R.id.likeButton);
-            btnDeleteFromGroup  = itemView.findViewById(R.id.btnDeleteFromGroup);
+
+            username = itemView.findViewById(R.id.postUsername);
+            caption = itemView.findViewById(R.id.postCaption);
+            image = itemView.findViewById(R.id.postImage);
+            profileImage = itemView.findViewById(R.id.profileImage);
+            location = itemView.findViewById(R.id.postLocation);
+            likes = itemView.findViewById(R.id.postLikes);
+            comments = itemView.findViewById(R.id.postComments);
+            tags = itemView.findViewById(R.id.postTags);
+            travelType = itemView.findViewById(R.id.postTravelType);
+            likeButton = itemView.findViewById(R.id.likeButton);
+            btnDeleteFromGroup = itemView.findViewById(R.id.btnDeleteFromGroup);
         }
     }
 }

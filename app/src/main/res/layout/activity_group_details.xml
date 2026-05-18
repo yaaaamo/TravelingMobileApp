@@ -6,13 +6,14 @@
     android:orientation="vertical"
     android:background="#FFF8F8">
 
-    <!-- Hero header -->
+    <!-- HERO HEADER -->
     <LinearLayout
         android:id="@+id/heroHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="← Back"
-        android:backgroundTint="@color/mainpink"/>
+        android:orientation="vertical"
+        android:background="@color/mainpink"
+        android:padding="16dp">
 
         <!-- Back row -->
         <LinearLayout
@@ -38,10 +39,9 @@
                 android:textColor="#FFDDE0"
                 android:textSize="13sp"
                 android:layout_marginStart="10dp"/>
-
         </LinearLayout>
 
-        <!-- Emoji avatar -->
+        <!-- Emoji -->
         <TextView
             android:id="@+id/groupEmojiHero"
             android:layout_width="64dp"
@@ -69,25 +69,20 @@
             android:textColor="#FFDDE0"
             android:layout_marginBottom="14dp"/>
 
-        <!-- Stats row -->
+        <!-- Stats -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/memberCountChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="… members"
-                android:textSize="12sp"
                 android:textColor="#FFFFFF"
                 android:background="@drawable/chip_white_translucent"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
+                android:padding="6dp"
                 android:layout_marginEnd="8dp"/>
 
             <TextView
@@ -95,13 +90,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="… photos"
-                android:textSize="12sp"
                 android:textColor="#FFFFFF"
                 android:background="@drawable/chip_white_translucent"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
+                android:padding="6dp"
                 android:layout_marginEnd="8dp"/>
 
             <TextView
@@ -109,37 +100,31 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="… paths"
-                android:textSize="12sp"
                 android:textColor="#FFFFFF"
                 android:background="@drawable/chip_white_translucent"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"/>
-
+                android:padding="6dp"/>
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Actions card -->
+    <!-- ACTIONS CARD -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginTop="-14dp"
+        android:layout_margin="12dp"
         android:background="@color/white"
         android:elevation="4dp"
         android:padding="12dp">
 
+        <!-- Add Post -->
         <LinearLayout
             android:id="@+id/addPostToGroupButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="+ Add Post"
-            android:backgroundTint="@color/mainpink"/>
+            android:orientation="vertical"
+            android:gravity="center">
 
             <ImageView
                 android:layout_width="22dp"
@@ -152,20 +137,18 @@
                 android:layout_height="wrap_content"
                 android:text="Add photo"
                 android:textSize="10sp"
-                android:textColor="@color/mainpink"
-                android:textStyle="bold"
-                android:layout_marginTop="4dp"/>
-
+                android:textColor="@color/mainpink"/>
         </LinearLayout>
 
+        <!-- Members -->
         <LinearLayout
             android:id="@+id/manageMembersButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="Members"
-            android:backgroundTint="@color/mainpink"/>
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginStart="8dp">
 
             <ImageView
                 android:layout_width="22dp"
@@ -178,12 +161,10 @@
                 android:layout_height="wrap_content"
                 android:text="Members"
                 android:textSize="10sp"
-                android:textColor="@color/mainpink"
-                android:textStyle="bold"
-                android:layout_marginTop="4dp"/>
-
+                android:textColor="@color/mainpink"/>
         </LinearLayout>
 
+        <!-- Leave -->
         <LinearLayout
             android:id="@+id/quitGroupButton"
             android:layout_width="0dp"
@@ -192,9 +173,7 @@
             android:orientation="vertical"
             android:gravity="center"
             android:background="@drawable/action_btn_red_bg"
-            android:padding="10dp"
-            android:clickable="true"
-            android:focusable="true">
+            android:padding="10dp">
 
             <ImageView
                 android:layout_width="22dp"
@@ -207,61 +186,44 @@
                 android:layout_height="wrap_content"
                 android:text="Leave"
                 android:textSize="10sp"
-                android:textColor="#E24B4A"
-                android:textStyle="bold"
-                android:layout_marginTop="4dp"/>
-
+                android:textColor="#E24B4A"/>
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Tab buttons -->
+    <!-- Tabs -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="4dp">
+        android:layout_margin="12dp">
 
         <Button
             android:id="@+id/tabPhotos"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
-            android:layout_marginEnd="6dp"
             android:text="📸 Photos"
-            android:textSize="13sp"
             android:textColor="#FFFFFF"
-            android:backgroundTint="@color/mainpink"
-            style="@style/Widget.MaterialComponents.Button"/>
+            android:backgroundTint="@color/mainpink"/>
 
         <Button
             android:id="@+id/tabPaths"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
-            android:layout_marginStart="6dp"
             android:text="🗺 Paths"
-            android:textSize="13sp"
             android:textColor="@color/mainpink"
-            android:backgroundTint="#F5E8E8"
-            style="@style/Widget.MaterialComponents.Button"/>
-
+            android:backgroundTint="#F5E8E8"/>
     </LinearLayout>
 
-    <!-- Photos tab content -->
+    <!-- CONTENT -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/groupPostsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingBottom="16dp"
-        android:clipToPadding="false"
-        android:visibility="visible"/>
+        android:layout_weight="1"/>
 
-    <!-- Paths tab content -->
     <ScrollView
         android:id="@+id/pathsScrollView"
         android:layout_width="match_parent"
@@ -275,7 +237,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="12dp"/>
-
     </ScrollView>
 
 </LinearLayout>

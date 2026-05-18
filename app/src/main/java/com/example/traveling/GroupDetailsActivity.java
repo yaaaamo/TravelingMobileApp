@@ -403,9 +403,6 @@ public class GroupDetailsActivity extends AppCompatActivity {
                                     DocumentSnapshot userDoc = userSnapshot.getDocuments().get(0);
                                     String newMemberId = userDoc.getId();
                                     String fetchedEmail = userDoc.getString("fullname");
-                                    DocumentSnapshot userDoc  = userSnapshot.getDocuments().get(0);
-                                    String newMemberId        = userDoc.getId();
-                                    String fetchedEmail       = userDoc.getString("email");
                                     final String userEmail    = (fetchedEmail == null
                                             || fetchedEmail.trim().isEmpty())
                                             ? emailInput : fetchedEmail;
