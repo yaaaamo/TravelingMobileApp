@@ -203,8 +203,14 @@ public class RouteDetail extends Fragment {
                                                   int progress, boolean fromUser) {
                         textBudget.setText("Budget : " + progress + " €");
                     }
-                    @Override public void onStartTrackingTouch(android.widget.SeekBar s) {}
-                    @Override public void onStopTrackingTouch(android.widget.SeekBar s) {}
+
+                    @Override
+                    public void onStartTrackingTouch(android.widget.SeekBar s) {
+                    }
+
+                    @Override
+                    public void onStopTrackingTouch(android.widget.SeekBar s) {
+                    }
                 });
 
         builder.setPositiveButton("Régénérer", (dialog, which) -> {
@@ -895,10 +901,6 @@ public class RouteDetail extends Fragment {
             return selectedDuration;
         }
 
-        // Fallback:
-        // Eğer selectedDurationMinutes set edilmemişse 3 saat kabul ediyoruz.
-        // Burada Google Directions duration kullanmıyoruz,
-        // çünkü o yürüyüş/ulaşım süresi; user'ın seçtiği gezi süresi değil.
         return 180;
     }
 
@@ -1004,13 +1006,19 @@ public class RouteDetail extends Fragment {
     private String getGenericDescription(Place place) {
         if (place.getCategory() == null) return "A noteworthy stop on your journey.";
         switch (place.getCategory()) {
-            case "culture": return "A cultural landmark not to miss during your visit.";
-            case "restauration": return "A culinary stop to recharge and enjoy local flavors.";
-            case "loisirs": return "A relaxing spot to take a break and enjoy the atmosphere.";
-            case "decouvertes": return "An unexpected discovery waiting to be explored.";
-            default: return "A noteworthy stop on your journey.";
+            case "culture":
+                return "A cultural landmark not to miss during your visit.";
+            case "restauration":
+                return "A culinary stop to recharge and enjoy local flavors.";
+            case "loisirs":
+                return "A relaxing spot to take a break and enjoy the atmosphere.";
+            case "decouvertes":
+                return "An unexpected discovery waiting to be explored.";
+            default:
+                return "A noteworthy stop on your journey.";
         }
     }
+
 
 
     private void showShareToGroupDialog(RouteOption option) {
@@ -1082,8 +1090,6 @@ public class RouteDetail extends Fragment {
 
     private void doShareToGroup(RouteOption option, String groupId,
                                 String groupName, String sharedByName) {
-
-
         List<ScheduledStop> schedule = generateOpeningAwareSchedule(option, option.getPlaces());
         java.util.List<java.util.Map<String, Object>> placesData = new java.util.ArrayList<>();
         for (ScheduledStop stop : schedule) {
@@ -1108,6 +1114,9 @@ public class RouteDetail extends Fragment {
         routeData.put("totalCost", option.getTotalEstimatedCost());
         routeData.put("sharedAt", com.google.firebase.Timestamp.now());
         routeData.put("sharedByName", sharedByName != null ? sharedByName : "Unknown");
+        routeData.put("sharedByUid",
+                com.google.firebase.auth.FirebaseAuth.getInstance()
+                        .getCurrentUser().getUid());
         routeData.put("places", placesData);
 
         RouteDetails details = option.getRouteDetails();
@@ -1130,4 +1139,8 @@ public class RouteDetail extends Fragment {
                                 "Failed: " + e.getMessage(),
                                 Toast.LENGTH_SHORT).show());
     }
+
+
+
+
 }

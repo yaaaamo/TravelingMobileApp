@@ -153,7 +153,7 @@ public class GroupDetailsActivity extends AppCompatActivity {
         tabPhotos.setTextColor(getColor(R.color.mainpink));
     }
 
-
+    // ─── Load data ────────────────────────────────────────────────────────────
 
     private void loadGroupPosts() {
         if (groupId == null) return;
@@ -205,8 +205,9 @@ public class GroupDetailsActivity extends AppCompatActivity {
         View card = LayoutInflater.from(this)
                 .inflate(R.layout.item_group_route, pathsContainer, false);
 
-        TextView title    = card.findViewById(R.id.routeTitle);
-        TextView sharedBy = card.findViewById(R.id.routeSharedBy);
+        TextView title       = card.findViewById(R.id.routeTitle);
+        TextView sharedBy    = card.findViewById(R.id.routeSharedBy);
+        android.widget.ImageButton btnDeleteRoute = card.findViewById(R.id.btnDeleteRoute);
         TextView cost     = card.findViewById(R.id.routeCost);
         TextView distance = card.findViewById(R.id.routeDistance);
         TextView date     = card.findViewById(R.id.routeDate);
@@ -247,16 +248,41 @@ public class GroupDetailsActivity extends AppCompatActivity {
                 Toast.makeText(this, "No location data available.", Toast.LENGTH_SHORT).show();
                 return;
             }
-            Maps mapsFragment = Maps.newInstanceWithJourney(placesList, routeTitle);
-            // Navigate back to MainActivity and open Maps
+            SharedJourneyHolder.places = placesList;
+            SharedJourneyHolder.title  = routeTitle;
             android.content.Intent intent = new android.content.Intent(this, MainActivity.class);
             intent.putExtra("openMapsWithJourney", true);
             intent.putExtra("journeyTitle", routeTitle);
-            // We pass the journey via a static holder to avoid Parcelable complexity
-            SharedJourneyHolder.places = placesList;
-            SharedJourneyHolder.title  = routeTitle;
             startActivity(intent);
         });
+
+        // Show delete button only for own routes
+        String sharedByUid = doc.getString("sharedByUid");
+        if (currentUserId != null && currentUserId.equals(sharedByUid)) {
+            btnDeleteRoute.setVisibility(View.VISIBLE);
+            btnDeleteRoute.setOnClickListener(v ->
+                    new AlertDialog.Builder(this)
+                            .setTitle("Remove from group")
+                            .setMessage("Remove this path from the group?")
+                            .setPositiveButton("Remove", (dialog, which) ->
+                                    db.collection("groups")
+                                            .document(groupId)
+                                            .collection("sharedRoutes")
+                                            .document(doc.getId())
+                                            .delete()
+                                            .addOnSuccessListener(unused -> {
+                                                pathsContainer.removeView(card);
+                                                Toast.makeText(this,
+                                                        "Path removed.",
+                                                        Toast.LENGTH_SHORT).show();
+                                            })
+                                            .addOnFailureListener(e ->
+                                                    Toast.makeText(this,
+                                                            "Failed: " + e.getMessage(),
+                                                            Toast.LENGTH_SHORT).show()))
+                            .setNegativeButton("Cancel", null)
+                            .show());
+        }
 
         pathsContainer.addView(card);
     }
@@ -293,7 +319,7 @@ public class GroupDetailsActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT).show());
     }
 
-
+    // ─── Manage members ───────────────────────────────────────────────────────
 
     private void showManageMembersDialog() {
         if (groupId == null || isFinishing() || isDestroyed()) return;
