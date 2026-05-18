@@ -47,21 +47,21 @@ public class Profile extends Fragment {
                         });
             }
 
-
+            // Posts count — TravelShare photos shared by this user
             db.collection("posts")
-                    .whereEqualTo("uid", uid)
+                    .whereEqualTo("userID", uid)
                     .get()
                     .addOnSuccessListener(snap ->
                             postsCount.setText(String.valueOf(snap.size())));
 
-
+            // Saved journeys count
             db.collection("Users").document(uid)
                     .collection("savedJourneys")
                     .get()
                     .addOnSuccessListener(snap ->
                             journeysCount.setText(String.valueOf(snap.size())));
 
-
+            // Liked journeys count
             db.collection("Users").document(uid)
                     .collection("savedJourneys")
                     .whereEqualTo("liked", true)
@@ -69,7 +69,6 @@ public class Profile extends Fragment {
                     .addOnSuccessListener(snap ->
                             likedCount.setText(String.valueOf(snap.size())));
         }
-
 
         Button btnSavedJourneys = view.findViewById(R.id.btn_saved_journeys);
         btnSavedJourneys.setOnClickListener(v ->
@@ -79,7 +78,6 @@ public class Profile extends Fragment {
                         .addToBackStack(null)
                         .commit()
         );
-
 
         Button btnLikedJourneys = view.findViewById(R.id.btn_liked_journeys);
         btnLikedJourneys.setOnClickListener(v ->
@@ -98,7 +96,6 @@ public class Profile extends Fragment {
                         .addToBackStack(null)
                         .commit()
         );
-
 
         Button btnLogout = view.findViewById(R.id.btn_logout);
         btnLogout.setOnClickListener(v -> {
@@ -121,7 +118,6 @@ public class Profile extends Fragment {
                         name.setText(snapshot.getString("fullname"));
                         email.setText(snapshot.getString("email"));
 
-
                         String photoUrl = snapshot.getString("profilePicture");
                         if (photoUrl != null && !photoUrl.isEmpty()) {
                             Glide.with(this)
@@ -131,8 +127,6 @@ public class Profile extends Fragment {
                         }
                     });
         }
-
-
 
         return view;
     }
