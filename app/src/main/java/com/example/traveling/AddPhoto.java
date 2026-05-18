@@ -251,6 +251,22 @@ private String foundPlaceId = null;
 
                     List<String> safeIds = ids.size() > 10 ? ids.subList(0, 10) : ids;
 
+        String currentUserId = auth.getCurrentUser() != null
+                ? auth.getCurrentUser().getUid() : null;
+        if (currentUserId == null) return;
+
+        db.collection("Users").document(currentUserId).get()
+                .addOnSuccessListener(userDoc -> {
+                    List<String> userGroupIds = (List<String>) userDoc.get("groupIds");
+                    if (userGroupIds == null || userGroupIds.isEmpty()) {
+                        groupNames.clear();
+                        groupIds.clear();
+                        return;
+                    }
+
+                    List<String> safeIds = userGroupIds.size() > 10
+                            ? userGroupIds.subList(0, 10) : userGroupIds;
+
                     db.collection("groups")
                             .whereIn(com.google.firebase.firestore.FieldPath.documentId(), safeIds)
                             .get()
@@ -281,7 +297,10 @@ private String foundPlaceId = null;
                                     if (index >= 0) groupSpinner.setSelection(index);
                                 }
                             });
-                });
+                            });
+
+                                                        });
+
     }
     private void savePostToFirestore(String imageUrl, String caption, String location,
                                      String country, String tags, String travelType,

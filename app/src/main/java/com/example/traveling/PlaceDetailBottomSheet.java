@@ -16,6 +16,8 @@ import androidx.annotation.Nullable;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -33,7 +35,7 @@ import okhttp3.Response;
 
 public class PlaceDetailBottomSheet extends BottomSheetDialogFragment {
 
-    private static final String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
+    private static final String API_KEY = BuildConfig.GOOGLE_API_KEY;
     private Map<String, Object> placeData;
     private final OkHttpClient client = new OkHttpClient();
 
@@ -109,7 +111,117 @@ public class PlaceDetailBottomSheet extends BottomSheetDialogFragment {
             fetchMorePhotos(nameForSearch.toString(), photosContainer);
         }
 
+        // Community posts
+        LinearLayout communityPostsContainer = view.findViewById(R.id.community_posts_container);
+        Object googlePlaceIdObj = placeData.get("googlePlaceId");
+        fetchCommunityPosts(nameForSearch != null ? nameForSearch.toString() : null,
+                googlePlaceIdObj != null ? googlePlaceIdObj.toString() : null,
+                communityPostsContainer);
+
         return view;
+    }
+
+    private void fetchCommunityPosts(String placeName, String googlePlaceId, LinearLayout container) {
+        if (getContext() == null) return;
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        if (placeName != null && !placeName.isEmpty()) {
+            db.collection("places")
+                    .whereEqualTo("name", placeName)
+                    .limit(1)
+                    .get()
+                    .addOnSuccessListener(placesSnapshot -> {
+                        if (getActivity() == null) return;
+
+                        if (!placesSnapshot.isEmpty()) {
+
+                            String firestorePlaceId = placesSnapshot.getDocuments().get(0).getId();
+                            android.util.Log.d("CommunityPosts", "Found place doc ID: " + firestorePlaceId);
+
+                            db.collection("posts")
+                                    .whereEqualTo("googlePlaceId", firestorePlaceId)
+                                    .limit(10)
+                                    .get()
+                                    .addOnSuccessListener(postsSnapshot -> {
+                                        if (getActivity() == null) return;
+                                        android.util.Log.d("CommunityPosts", "Posts found: " + postsSnapshot.size());
+                                        if (!postsSnapshot.isEmpty()) {
+                                            showCommunityPosts(postsSnapshot.getDocuments(), container);
+                                        } else {
+                                            showNoPosts(container);
+                                        }
+                                    })
+                                    .addOnFailureListener(e -> showNoPosts(container));
+                        } else {
+                            showNoPosts(container);
+                        }
+                    })
+                    .addOnFailureListener(e -> showNoPosts(container));
+        }
+    }
+
+    private void searchPostsByName(String placeName, LinearLayout container, FirebaseFirestore db) {
+        android.util.Log.d("CommunityPosts", "Searching for placeName: " + placeName);
+        if (getActivity() == null) return;
+
+        db.collection("posts")
+                .whereEqualTo("location", placeName)
+                .limit(10)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (getActivity() == null) return;
+                    if (!snapshot.isEmpty()) {
+                        showCommunityPosts(snapshot.getDocuments(), container);
+                    } else {
+                        showNoPosts(container);
+                    }
+                })
+                .addOnFailureListener(e -> showNoPosts(container));
+    }
+
+    private void showCommunityPosts(List<DocumentSnapshot> docs, LinearLayout container) {
+        if (getActivity() == null || getContext() == null) return;
+
+        getActivity().runOnUiThread(() -> {
+            container.removeAllViews();
+            for (DocumentSnapshot doc : docs) {
+                View card = LayoutInflater.from(requireContext())
+                        .inflate(R.layout.item_place_community_post, container, false);
+
+                TextView username = card.findViewById(R.id.post_username);
+                TextView caption  = card.findViewById(R.id.post_caption);
+                ImageView postImg = card.findViewById(R.id.post_image);
+                ImageView profileImg = card.findViewById(R.id.post_profile_pic);
+
+                String u = doc.getString("username");
+                String c = doc.getString("caption");
+                String img = doc.getString("imageUrl");
+                String prof = doc.getString("profilePicture");
+
+                username.setText(u != null ? u : "Unknown");
+                caption.setText(c != null ? c : "");
+
+                if (img != null && !img.isEmpty()) {
+                    Glide.with(requireContext()).load(img).centerCrop().into(postImg);
+                }
+                if (prof != null && !prof.isEmpty()) {
+                    Glide.with(requireContext()).load(prof).circleCrop().into(profileImg);
+                }
+
+                container.addView(card);
+            }
+        });
+    }
+
+    private void showNoPosts(LinearLayout container) {
+        if (getActivity() == null || getContext() == null) return;
+        getActivity().runOnUiThread(() -> {
+            TextView empty = new TextView(requireContext());
+            empty.setText("No community posts for this place yet.");
+            empty.setTextSize(13f);
+            empty.setPadding(0, 8, 0, 8);
+            container.addView(empty);
+        });
     }
 
     private void fetchMorePhotos(String placeName, LinearLayout container) {

@@ -149,6 +149,8 @@ public class RouteDetail extends Fragment {
         );
 
         Button btnSaveJourney = view.findViewById(R.id.btn_save_journey);
+        Button btnShareToGroup = view.findViewById(R.id.btn_share_to_group);
+        btnShareToGroup.setOnClickListener(v -> showShareToGroupDialog(currentOption));
         Button btnExportPdf = view.findViewById(R.id.btn_export_pdf);
         Button btnShare = view.findViewById(R.id.btn_share_journey);
 
@@ -201,8 +203,14 @@ public class RouteDetail extends Fragment {
                                                   int progress, boolean fromUser) {
                         textBudget.setText("Budget : " + progress + " €");
                     }
-                    @Override public void onStartTrackingTouch(android.widget.SeekBar s) {}
-                    @Override public void onStopTrackingTouch(android.widget.SeekBar s) {}
+
+                    @Override
+                    public void onStartTrackingTouch(android.widget.SeekBar s) {
+                    }
+
+                    @Override
+                    public void onStopTrackingTouch(android.widget.SeekBar s) {
+                    }
                 });
 
         builder.setPositiveButton("Régénérer", (dialog, which) -> {
@@ -439,7 +447,7 @@ public class RouteDetail extends Fragment {
         if (savedInflater == null || timelineContainer == null) return;
 
 
-        String API_KEY = "AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c";
+        String API_KEY = BuildConfig.GOOGLE_API_KEY;
 
         title.setText("Your " + option.getTitle() + " Escape");
         description.setText("A curated journey through " + option.getPlaces().size()
@@ -893,10 +901,6 @@ public class RouteDetail extends Fragment {
             return selectedDuration;
         }
 
-        // Fallback:
-        // Eğer selectedDurationMinutes set edilmemişse 3 saat kabul ediyoruz.
-        // Burada Google Directions duration kullanmıyoruz,
-        // çünkü o yürüyüş/ulaşım süresi; user'ın seçtiği gezi süresi değil.
         return 180;
     }
 
@@ -1002,11 +1006,141 @@ public class RouteDetail extends Fragment {
     private String getGenericDescription(Place place) {
         if (place.getCategory() == null) return "A noteworthy stop on your journey.";
         switch (place.getCategory()) {
-            case "culture": return "A cultural landmark not to miss during your visit.";
-            case "restauration": return "A culinary stop to recharge and enjoy local flavors.";
-            case "loisirs": return "A relaxing spot to take a break and enjoy the atmosphere.";
-            case "decouvertes": return "An unexpected discovery waiting to be explored.";
-            default: return "A noteworthy stop on your journey.";
+            case "culture":
+                return "A cultural landmark not to miss during your visit.";
+            case "restauration":
+                return "A culinary stop to recharge and enjoy local flavors.";
+            case "loisirs":
+                return "A relaxing spot to take a break and enjoy the atmosphere.";
+            case "decouvertes":
+                return "An unexpected discovery waiting to be explored.";
+            default:
+                return "A noteworthy stop on your journey.";
         }
     }
+
+
+
+    private void showShareToGroupDialog(RouteOption option) {
+        FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || user.isAnonymous()) {
+            Toast.makeText(requireContext(),
+                    "Connectez-vous pour partager.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String uid = user.getUid();
+
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("Users").document(uid)
+                .get()
+                .addOnSuccessListener(userDoc -> {
+                    java.util.List<String> groupIds =
+                            (java.util.List<String>) userDoc.get("groupIds");
+
+                    if (groupIds == null || groupIds.isEmpty()) {
+                        Toast.makeText(requireContext(),
+                                "You are not in any group yet.",
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+
+                    java.util.List<String> safeIds = groupIds.size() > 10
+                            ? groupIds.subList(0, 10) : groupIds;
+
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            .collection("groups")
+                            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), safeIds)
+                            .get()
+                            .addOnSuccessListener(groupsSnap -> {
+                                if (groupsSnap.isEmpty()) {
+                                    Toast.makeText(requireContext(),
+                                            "No groups found.", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+
+
+                                String[] groupNames = new String[groupsSnap.size()];
+                                String[] fetchedGroupIds = new String[groupsSnap.size()];
+                                int idx = 0;
+                                for (com.google.firebase.firestore.DocumentSnapshot doc
+                                        : groupsSnap.getDocuments()) {
+                                    String name = doc.getString("name");
+                                    groupNames[idx] = name != null ? name : doc.getId();
+                                    fetchedGroupIds[idx] = doc.getId();
+                                    idx++;
+                                }
+
+
+                                new android.app.AlertDialog.Builder(requireContext())
+                                        .setTitle("Share to which group?")
+                                        .setItems(groupNames, (dialog, which) -> {
+                                            String selectedGroupId = fetchedGroupIds[which];
+                                            String selectedGroupName = groupNames[which];
+                                            doShareToGroup(option, selectedGroupId,
+                                                    selectedGroupName, userDoc.getString("fullname"));
+                                        })
+                                        .setNegativeButton("Cancel", null)
+                                        .show();
+                            });
+                });
+    }
+
+    private void doShareToGroup(RouteOption option, String groupId,
+                                String groupName, String sharedByName) {
+        List<ScheduledStop> schedule = generateOpeningAwareSchedule(option, option.getPlaces());
+        java.util.List<java.util.Map<String, Object>> placesData = new java.util.ArrayList<>();
+        for (ScheduledStop stop : schedule) {
+            Place place = stop.place;
+            TimeSlot slot = stop.slot;
+            java.util.Map<String, Object> p = new java.util.HashMap<>();
+            p.put("name", place.getName());
+            p.put("category", place.getCategory());
+            p.put("price", place.getPrice());
+            p.put("photoReference", place.getPhotoReference());
+            p.put("creneau", slot.label);
+            p.put("time", slot.time);
+            if (place.getLocation() != null) {
+                p.put("lat", place.getLocation().getLatitude());
+                p.put("lng", place.getLocation().getLongitude());
+            }
+            placesData.add(p);
+        }
+
+        java.util.Map<String, Object> routeData = new java.util.HashMap<>();
+        routeData.put("title", option.getTitle());
+        routeData.put("totalCost", option.getTotalEstimatedCost());
+        routeData.put("sharedAt", com.google.firebase.Timestamp.now());
+        routeData.put("sharedByName", sharedByName != null ? sharedByName : "Unknown");
+        routeData.put("sharedByUid",
+                com.google.firebase.auth.FirebaseAuth.getInstance()
+                        .getCurrentUser().getUid());
+        routeData.put("places", placesData);
+
+        RouteDetails details = option.getRouteDetails();
+        if (details != null) {
+            routeData.put("distance", details.getFormattedDistance());
+            routeData.put("duration", details.getFormattedDuration());
+        }
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("groups")
+                .document(groupId)
+                .collection("sharedRoutes")
+                .add(routeData)
+                .addOnSuccessListener(ref ->
+                        Toast.makeText(requireContext(),
+                                "Route shared to " + groupName + "! 🎉",
+                                Toast.LENGTH_LONG).show())
+                .addOnFailureListener(e ->
+                        Toast.makeText(requireContext(),
+                                "Failed: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show());
+    }
+
+
+
+
 }

@@ -15,15 +15,12 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.Traveling">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${GOOGLE_API_KEY}"/>
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDxCfUdpFdYXDoVqk91QhWDeRqf2XTOP8c"/>
         <activity
             android:name=".MainActivity"
             android:exported="true">

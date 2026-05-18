@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        androidx.core.splashscreen.SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setCurrentFragment(new Home());
@@ -65,6 +66,35 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
+        }
+
+        if (getIntent().getBooleanExtra("openAddPhoto", false)) {
+            String gid = getIntent().getStringExtra("groupId");
+            AddPhoto addPhotoFragment = new AddPhoto();
+            if (gid != null) {
+                Bundle bundle = new Bundle();
+                bundle.putString("groupId", gid);
+                addPhotoFragment.setArguments(bundle);
+            }
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, addPhotoFragment)
+                    .addToBackStack(null)
+                    .commit();
+        }
+
+        if (getIntent().getBooleanExtra("openMapsWithJourney", false)) {
+            if (SharedJourneyHolder.places != null) {
+                Maps mapsFragment = Maps.newInstanceWithJourney(
+                        SharedJourneyHolder.places,
+                        SharedJourneyHolder.title);
+                SharedJourneyHolder.clear();
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, mapsFragment)
+                        .addToBackStack(null)
+                        .commit();
+            }
         }
 
         BottomNavigationView bot = findViewById(R.id.bottomNavigationView);

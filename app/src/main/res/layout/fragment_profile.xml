@@ -66,6 +66,7 @@
                 android:textSize="14sp"
                 android:textColor="#888888"
                 android:layout_marginTop="2dp"/>
+
             <Button
                 android:id="@+id/btn_edit_profile"
                 android:layout_width="match_parent"
@@ -88,6 +89,7 @@
             android:background="#F5E8E8"
             android:padding="16dp">
 
+            <!-- POSTS (TravelShare photos) -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -118,6 +120,7 @@
                 android:layout_height="match_parent"
                 android:background="#DDDDDD"/>
 
+            <!-- SAVED JOURNEYS -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -137,8 +140,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="JOURNEYS"
-                    android:textSize="10sp"
+                    android:text="SAVED JOURNEYS"
+                    android:textSize="9sp"
                     android:textColor="#888888"/>
 
             </LinearLayout>
@@ -148,6 +151,7 @@
                 android:layout_height="match_parent"
                 android:background="#DDDDDD"/>
 
+            <!-- LIKED JOURNEYS -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -167,8 +171,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="LIKED"
-                    android:textSize="10sp"
+                    android:text="LIKED JOURNEYS"
+                    android:textSize="9sp"
                     android:textColor="#888888"/>
 
             </LinearLayout>
@@ -196,7 +200,7 @@
                 android:id="@+id/btn_liked_journeys"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="👍 Liked &amp; Disliked Journeys"
+                android:text="👍 Liked Journeys"
                 android:layout_marginBottom="8dp"
                 android:backgroundTint="@color/mainpink"
                 android:textColor="#FFFFFF"/>
@@ -209,8 +213,6 @@
                 android:backgroundTint="#EEEEEE"
                 android:textColor="@color/brown"
                 android:layout_marginBottom="16dp"/>
-
-
 
         </LinearLayout>
 

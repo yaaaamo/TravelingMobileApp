@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -10,7 +9,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
         <ImageView
             android:id="@+id/profileImage"
@@ -18,8 +18,9 @@
             android:layout_height="50dp"/>
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:orientation="vertical"
             android:paddingStart="8dp">
 
@@ -34,6 +35,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </LinearLayout>
+
+        <!-- Delete button — only visible in group context for own posts -->
+        <ImageButton
+            android:id="@+id/btnDeleteFromGroup"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_arrow_back"
+            android:rotation="90"
+            android:tint="#E24B4A"
+            android:background="@drawable/action_btn_red_bg"
+            android:padding="6dp"
+            android:visibility="gone"
+            android:contentDescription="Remove from group"/>
 
     </LinearLayout>
 
@@ -78,5 +92,12 @@
             android:layout_marginStart="16dp"
             android:text="0 Comments"/>
     </LinearLayout>
+
+    <!-- Hidden like button (kept for adapter compatibility) -->
+    <Button
+        android:id="@+id/likeButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"/>
 
 </LinearLayout>
