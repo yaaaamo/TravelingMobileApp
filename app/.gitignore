@@ -3,7 +3,7 @@
 build/
 
 # Local config (contains your SDK path)
-local.properties
+
 
 
 # Android Studio
