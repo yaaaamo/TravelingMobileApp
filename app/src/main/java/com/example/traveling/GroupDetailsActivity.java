@@ -170,6 +170,9 @@ public class GroupDetailsActivity extends AppCompatActivity {
                             postList.add(post);
                         }
                     }
+                    // Pass groupId and currentUserId so the delete button appears
+                    adapter = new AdapterPosts(postList, groupId, currentUserId);
+                    groupPostsRecyclerView.setAdapter(adapter);
                     adapter.notifyDataSetChanged();
                 });
     }
@@ -228,7 +231,7 @@ public class GroupDetailsActivity extends AppCompatActivity {
 
         com.google.firebase.Timestamp ts = doc.getTimestamp("sharedAt");
         if (ts != null) {
-            String formatted = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+            String formatted = new java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
                     .format(ts.toDate());
             date.setText("🗓 " + formatted);
         }
@@ -256,35 +259,56 @@ public class GroupDetailsActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Show delete button only for own routes
+        // Fix: check sharedByUid, fallback to sharedByName match
         String sharedByUid = doc.getString("sharedByUid");
-        if (currentUserId != null && currentUserId.equals(sharedByUid)) {
+
+        boolean isOwner = false;
+        if (currentUserId != null) {
+            if (sharedByUid != null) {
+                isOwner = currentUserId.equals(sharedByUid);
+            } else {
+                // Fallback for old routes: patch the document with current user's uid if name matches
+                db.collection("Users").document(currentUserId).get()
+                        .addOnSuccessListener(userDoc -> {
+                            String myName = userDoc.getString("fullname");
+                            if (myName != null && myName.equals(by)) {
+                                // Patch the missing sharedByUid field
+                                doc.getReference().update("sharedByUid", currentUserId);
+                                btnDeleteRoute.setVisibility(View.VISIBLE);
+                                btnDeleteRoute.setOnClickListener(v -> showDeleteRouteDialog(doc, card));
+                            }
+                        });
+            }
+        }
+
+        if (isOwner) {
             btnDeleteRoute.setVisibility(View.VISIBLE);
-            btnDeleteRoute.setOnClickListener(v ->
-                    new AlertDialog.Builder(this)
-                            .setTitle("Remove from group")
-                            .setMessage("Remove this path from the group?")
-                            .setPositiveButton("Remove", (dialog, which) ->
-                                    db.collection("groups")
-                                            .document(groupId)
-                                            .collection("sharedRoutes")
-                                            .document(doc.getId())
-                                            .delete()
-                                            .addOnSuccessListener(unused -> {
-                                                pathsContainer.removeView(card);
-                                                Toast.makeText(this,
-                                                        "Path removed.",
-                                                        Toast.LENGTH_SHORT).show();
-                                            })
-                                            .addOnFailureListener(e ->
-                                                    Toast.makeText(this,
-                                                            "Failed: " + e.getMessage(),
-                                                            Toast.LENGTH_SHORT).show()))
-                            .setNegativeButton("Cancel", null)
-                            .show());
+            btnDeleteRoute.setOnClickListener(v -> showDeleteRouteDialog(doc, card));
         }
 
         pathsContainer.addView(card);
+    }
+
+    private void showDeleteRouteDialog(DocumentSnapshot doc, View card) {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Remove from group")
+                .setMessage("Remove this path from the group?")
+                .setPositiveButton("Remove", (dialog, which) ->
+                        db.collection("groups")
+                                .document(groupId)
+                                .collection("sharedRoutes")
+                                .document(doc.getId())
+                                .delete()
+                                .addOnSuccessListener(unused -> {
+                                    pathsContainer.removeView(card);
+                                    Toast.makeText(this, "Path removed.", Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this,
+                                                "Failed: " + e.getMessage(),
+                                                Toast.LENGTH_SHORT).show()))
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     // ─── Quit group ───────────────────────────────────────────────────────────
