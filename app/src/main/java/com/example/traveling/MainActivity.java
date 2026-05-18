@@ -82,6 +82,20 @@ public class MainActivity extends AppCompatActivity {
                     .commit();
         }
 
+        if (getIntent().getBooleanExtra("openMapsWithJourney", false)) {
+            if (SharedJourneyHolder.places != null) {
+                Maps mapsFragment = Maps.newInstanceWithJourney(
+                        SharedJourneyHolder.places,
+                        SharedJourneyHolder.title);
+                SharedJourneyHolder.clear();
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, mapsFragment)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        }
+
         BottomNavigationView bot = findViewById(R.id.bottomNavigationView);
         bot.setOnNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
