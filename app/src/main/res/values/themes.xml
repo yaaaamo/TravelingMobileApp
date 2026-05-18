@@ -1,9 +1,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Base theme - MUST be first -->
     <style name="Base.Theme.Traveling" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
+    <!-- Main theme - MUST be before splash -->
     <style name="Theme.Traveling" parent="Base.Theme.Traveling" />
+
+    <!-- Splash theme - references Theme.Traveling so must be AFTER it -->
+    <style name="Theme.Traveling.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/mainpink</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/my_logo</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/mainpink</item>
+        <item name="postSplashScreenTheme">@style/Theme.Traveling</item>
+    </style>
 </resources>
