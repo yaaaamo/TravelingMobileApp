@@ -241,9 +241,7 @@ public class PostDetailsActivity extends AppCompatActivity {
 
         }
         Button backarrow = findViewById(R.id.backarrow);
-        backarrow.setOnClickListener(l ->{
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-        });
+        backarrow.setOnClickListener(l -> onBackPressed());
+
     }
 }

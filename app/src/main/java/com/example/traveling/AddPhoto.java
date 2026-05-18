@@ -241,34 +241,54 @@ private String foundPlaceId = null;
     }
 
     private void loadGroups() {
-        db.collection("groups").get().addOnSuccessListener(snapshot -> {
-            groupNames.clear();
-            groupIds.clear();
+        String currentUserId = auth.getCurrentUser() != null
+                ? auth.getCurrentUser().getUid() : null;
+        if (currentUserId == null) return;
 
-            for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                String name = doc.getString("name");
-                if (name != null) {
-                    groupNames.add(name);
-                    groupIds.add(doc.getId());
-                }
-            }
 
-            ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-                    requireContext(),
-                    android.R.layout.simple_spinner_item,
-                    groupNames);
-            spinnerAdapter.setDropDownViewResource(
-                    android.R.layout.simple_spinner_dropdown_item);
-            groupSpinner.setAdapter(spinnerAdapter);
+        db.collection("Users").document(currentUserId).get()
+                .addOnSuccessListener(userDoc -> {
+                    List<String> userGroupIds = (List<String>) userDoc.get("groupIds");
+                    if (userGroupIds == null || userGroupIds.isEmpty()) {
+                        groupNames.clear();
+                        groupIds.clear();
+                        return;
+                    }
 
-            // if opened from a group page, pre-select that group in the radio + spinner
-            if (preselectedGroupId != null) {
-                postTargetGroup.check(R.id.radioGroup);
-                groupSpinner.setVisibility(View.VISIBLE);
-                int index = groupIds.indexOf(preselectedGroupId);
-                if (index >= 0) groupSpinner.setSelection(index);
-            }
-        });
+                    List<String> safeIds = userGroupIds.size() > 10
+                            ? userGroupIds.subList(0, 10) : userGroupIds;
+
+                    db.collection("groups")
+                            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), safeIds)
+                            .get()
+                            .addOnSuccessListener(snapshot -> {
+                                groupNames.clear();
+                                groupIds.clear();
+
+                                for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                                    String name = doc.getString("name");
+                                    if (name != null) {
+                                        groupNames.add(name);
+                                        groupIds.add(doc.getId());
+                                    }
+                                }
+
+                                ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
+                                        requireContext(),
+                                        android.R.layout.simple_spinner_item,
+                                        groupNames);
+                                spinnerAdapter.setDropDownViewResource(
+                                        android.R.layout.simple_spinner_dropdown_item);
+                                groupSpinner.setAdapter(spinnerAdapter);
+
+                                if (preselectedGroupId != null) {
+                                    postTargetGroup.check(R.id.radioGroup);
+                                    groupSpinner.setVisibility(View.VISIBLE);
+                                    int index = groupIds.indexOf(preselectedGroupId);
+                                    if (index >= 0) groupSpinner.setSelection(index);
+                                }
+                            });
+                });
     }
 
     private void savePostToFirestore(String imageUrl, String caption, String location,

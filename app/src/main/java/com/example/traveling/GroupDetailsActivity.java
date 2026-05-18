@@ -29,69 +29,100 @@ public class GroupDetailsActivity extends AppCompatActivity {
     private List<ModelPost> postList;
     private AdapterPosts adapter;
     private String groupId;
+    private String currentUserId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_details);
 
-        db   = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
+        db            = FirebaseFirestore.getInstance();
+        auth          = FirebaseAuth.getInstance();
+        currentUserId = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
 
-        // get group info from intent
         groupId                 = getIntent().getStringExtra("groupId");
         String groupName        = getIntent().getStringExtra("groupName");
         String groupDescription = getIntent().getStringExtra("groupDescription");
 
-        // bind views
-        TextView nameView        = findViewById(R.id.groupName);
-        TextView descriptionView = findViewById(R.id.groupDescription);
-        Button backButton        = findViewById(R.id.backButton);
-        Button addPostButton     = findViewById(R.id.addPostToGroupButton);
+        TextView nameView          = findViewById(R.id.groupName);
+        TextView descriptionView   = findViewById(R.id.groupDescription);
+        Button backButton          = findViewById(R.id.backButton);
+        Button addPostButton       = findViewById(R.id.addPostToGroupButton);
         Button manageMembersButton = findViewById(R.id.manageMembersButton);
+        Button quitGroupButton     = findViewById(R.id.quitGroupButton);
         RecyclerView recyclerView  = findViewById(R.id.groupPostsRecyclerView);
 
         nameView.setText(groupName);
         descriptionView.setText(groupDescription);
 
-        // back button
         backButton.setOnClickListener(v -> finish());
 
-        // set up posts recycler view
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         postList = new ArrayList<>();
         adapter  = new AdapterPosts(postList);
         recyclerView.setAdapter(adapter);
 
-        // add post to group button — navigates to AddPhoto passing groupId
         addPostButton.setOnClickListener(v -> {
-            AddPhoto addPhotoFragment = new AddPhoto();
-            Bundle bundle = new Bundle();
-            bundle.putString("groupId", groupId);
-            addPhotoFragment.setArguments(bundle);
-
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, addPhotoFragment)
-                    .addToBackStack(null)
-                    .commit();
+            android.content.Intent intent = new android.content.Intent(this, MainActivity.class);
+            intent.putExtra("openAddPhoto", true);
+            intent.putExtra("groupId", groupId);
+            startActivity(intent);
         });
 
-        // manage members button
+        // Owner check — show Members button only to group creator
+        if (groupId != null) {
+            db.collection("groups").document(groupId).get()
+                    .addOnSuccessListener(doc -> {
+                        String createdBy = doc.getString("createdBy");
+                        boolean isOwner  = currentUserId != null && currentUserId.equals(createdBy);
+                        manageMembersButton.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+                    });
+        }
+
         manageMembersButton.setOnClickListener(v -> showManageMembersDialog());
 
-        // load posts
+        quitGroupButton.setOnClickListener(v -> showQuitConfirmDialog());
+
         loadGroupPosts();
+    }
+
+    private void showQuitConfirmDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Quit group")
+                .setMessage("Are you sure you want to leave this group?")
+                .setPositiveButton("Quit", (dialog, which) -> quitGroup())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void quitGroup() {
+        if (currentUserId == null || groupId == null) return;
+
+        db.collection("groups")
+                .document(groupId)
+                .collection("Members")
+                .document(currentUserId)
+                .delete()
+                .addOnSuccessListener(unused ->
+                        db.collection("Users").document(currentUserId)
+                                .update("groupIds", FieldValue.arrayRemove(groupId))
+                                .addOnSuccessListener(u -> {
+                                    Toast.makeText(this, "You left the group.",
+                                            Toast.LENGTH_SHORT).show();
+                                    finish();
+                                }))
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to quit: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show());
     }
 
     private void loadGroupPosts() {
         if (groupId == null) return;
 
         db.collection("posts")
-                .whereEqualTo("groupId", groupId)
+                .whereEqualTo("groupid", groupId)
                 .addSnapshotListener((value, error) -> {
                     if (value == null) return;
-
                     postList.clear();
                     for (DocumentSnapshot doc : value.getDocuments()) {
                         ModelPost post = doc.toObject(ModelPost.class);
@@ -114,20 +145,17 @@ public class GroupDetailsActivity extends AppCompatActivity {
                     if (isFinishing() || isDestroyed()) return;
 
                     List<String> emails = new ArrayList<>();
-
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
                         String email = doc.getString("email");
-                        if (email != null && !email.trim().isEmpty()) {
-                            emails.add(email);
-                        }
+                        if (email != null && !email.trim().isEmpty()) emails.add(email);
                     }
 
                     View dialogView = LayoutInflater.from(this)
                             .inflate(R.layout.dialog_manage_members, null);
 
                     TextView membersListView = dialogView.findViewById(R.id.membersList);
-                    EditText addMemberInput = dialogView.findViewById(R.id.addMemberInput);
-                    Button addMemberButton = dialogView.findViewById(R.id.addMemberButton);
+                    EditText addMemberInput  = dialogView.findViewById(R.id.addMemberInput);
+                    Button addMemberButton   = dialogView.findViewById(R.id.addMemberButton);
 
                     updateMembersList(membersListView, emails);
 
@@ -139,7 +167,6 @@ public class GroupDetailsActivity extends AppCompatActivity {
 
                     addMemberButton.setOnClickListener(v -> {
                         String emailInput = addMemberInput.getText().toString().trim().toLowerCase();
-
                         if (emailInput.isEmpty()) {
                             Toast.makeText(this, "Enter an email", Toast.LENGTH_SHORT).show();
                             return;
@@ -155,21 +182,18 @@ public class GroupDetailsActivity extends AppCompatActivity {
                                     if (isFinishing() || isDestroyed()) return;
 
                                     if (userSnapshot.isEmpty()) {
-                                        Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(this, "User not found",
+                                                Toast.LENGTH_SHORT).show();
                                         addMemberButton.setEnabled(true);
                                         return;
                                     }
 
                                     DocumentSnapshot userDoc = userSnapshot.getDocuments().get(0);
-                                    String newMemberId = userDoc.getId();
-                                    String fetchedEmail = userDoc.getString("email");
-
-                                    final String userEmail;
-                                    if (fetchedEmail == null || fetchedEmail.trim().isEmpty()) {
-                                        userEmail = emailInput;
-                                    } else {
-                                        userEmail = fetchedEmail;
-                                    }
+                                    String newMemberId       = userDoc.getId();
+                                    String fetchedEmail      = userDoc.getString("email");
+                                    final String userEmail   = (fetchedEmail == null
+                                            || fetchedEmail.trim().isEmpty())
+                                            ? emailInput : fetchedEmail;
 
                                     HashMap<String, Object> memberData = new HashMap<>();
                                     memberData.put("email", userEmail);
@@ -182,32 +206,29 @@ public class GroupDetailsActivity extends AppCompatActivity {
                                             .set(memberData)
                                             .addOnSuccessListener(unused -> {
                                                 db.collection("Users").document(newMemberId)
-                                                        .update("groupIds", FieldValue.arrayUnion(groupId));
-
+                                                        .update("groupIds",
+                                                                FieldValue.arrayUnion(groupId));
                                                 if (isFinishing() || isDestroyed()) return;
-
-                                                Toast.makeText(this, userEmail + " added!", Toast.LENGTH_SHORT).show();
-
+                                                Toast.makeText(this, userEmail + " added!",
+                                                        Toast.LENGTH_SHORT).show();
                                                 addMemberInput.setText("");
-
                                                 if (!emails.contains(userEmail)) {
                                                     emails.add(userEmail);
                                                     updateMembersList(membersListView, emails);
                                                 }
-
                                                 addMemberButton.setEnabled(true);
                                             })
                                             .addOnFailureListener(e -> {
                                                 if (isFinishing() || isDestroyed()) return;
-
-                                                Toast.makeText(this, "Failed to add member", Toast.LENGTH_SHORT).show();
+                                                Toast.makeText(this, "Failed to add member",
+                                                        Toast.LENGTH_SHORT).show();
                                                 addMemberButton.setEnabled(true);
                                             });
                                 })
                                 .addOnFailureListener(e -> {
                                     if (isFinishing() || isDestroyed()) return;
-
-                                    Toast.makeText(this, "Failed to search user", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(this, "Failed to search user",
+                                            Toast.LENGTH_SHORT).show();
                                     addMemberButton.setEnabled(true);
                                 });
                     });

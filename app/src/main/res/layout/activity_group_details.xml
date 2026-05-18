@@ -5,14 +5,12 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- BACK BUTTON -->
     <Button
         android:id="@+id/backButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="← Back"/>
 
-    <!-- GROUP NAME -->
     <TextView
         android:id="@+id/groupName"
         android:layout_width="wrap_content"
@@ -21,14 +19,12 @@
         android:textSize="22sp"
         android:layout_marginTop="8dp"/>
 
-    <!-- GROUP DESCRIPTION -->
     <TextView
         android:id="@+id/groupDescription"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"/>
 
-    <!-- ACTION BUTTONS -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -40,7 +36,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="+ Add Post"/>
+            android:text="+ Add Post"
+            android:backgroundTint="@color/mainpink"
+            android:textColor="@color/white"/>
 
         <Button
             android:id="@+id/manageMembersButton"
@@ -48,11 +46,22 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="8dp"
-            android:text="Members"/>
+            android:text="Members"
+            android:backgroundTint="@color/mainpink"
+            android:textColor="@color/white"
+            android:visibility="gone"/>
 
     </LinearLayout>
 
-    <!-- POSTS LIST -->
+    <Button
+        android:id="@+id/quitGroupButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="🚪 Quit group"
+        android:backgroundTint="#FFEEEE"
+        android:textColor="#C0392B"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/groupPostsRecyclerView"
         android:layout_width="match_parent"

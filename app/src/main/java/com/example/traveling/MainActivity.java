@@ -67,6 +67,21 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        if (getIntent().getBooleanExtra("openAddPhoto", false)) {
+            String gid = getIntent().getStringExtra("groupId");
+            AddPhoto addPhotoFragment = new AddPhoto();
+            if (gid != null) {
+                Bundle bundle = new Bundle();
+                bundle.putString("groupId", gid);
+                addPhotoFragment.setArguments(bundle);
+            }
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, addPhotoFragment)
+                    .addToBackStack(null)
+                    .commit();
+        }
+
         BottomNavigationView bot = findViewById(R.id.bottomNavigationView);
         bot.setOnNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
