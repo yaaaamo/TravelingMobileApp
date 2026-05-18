@@ -44,18 +44,29 @@ public class GroupDetailsActivity extends AppCompatActivity {
         String groupName        = getIntent().getStringExtra("groupName");
         String groupDescription = getIntent().getStringExtra("groupDescription");
 
-        TextView nameView          = findViewById(R.id.groupName);
-        TextView descriptionView   = findViewById(R.id.groupDescription);
-        Button backButton          = findViewById(R.id.backButton);
-        Button addPostButton       = findViewById(R.id.addPostToGroupButton);
-        Button manageMembersButton = findViewById(R.id.manageMembersButton);
-        Button quitGroupButton     = findViewById(R.id.quitGroupButton);
-        RecyclerView recyclerView  = findViewById(R.id.groupPostsRecyclerView);
+        TextView nameView        = findViewById(R.id.groupName);
+        TextView descView        = findViewById(R.id.groupDescription);
+        TextView memberChip      = findViewById(R.id.memberCountChip);
+        TextView postChip        = findViewById(R.id.postCountChip);
+        View backButton          = findViewById(R.id.backButton);
+        View addPostButton       = findViewById(R.id.addPostToGroupButton);
+        View manageMembersButton = findViewById(R.id.manageMembersButton);
+        View quitGroupButton     = findViewById(R.id.quitGroupButton);
+        RecyclerView recyclerView = findViewById(R.id.groupPostsRecyclerView);
 
         nameView.setText(groupName);
-        descriptionView.setText(groupDescription);
-
+        descView.setText(groupDescription);
         backButton.setOnClickListener(v -> finish());
+
+        // Load live counts
+        if (groupId != null) {
+            db.collection("groups").document(groupId)
+                    .collection("Members").get()
+                    .addOnSuccessListener(s -> memberChip.setText(s.size() + " members"));
+
+            db.collection("posts").whereEqualTo("groupid", groupId).get()
+                    .addOnSuccessListener(s -> postChip.setText(s.size() + " posts"));
+        }
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         postList = new ArrayList<>();
@@ -69,7 +80,6 @@ public class GroupDetailsActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Owner check — show Members button only to group creator
         if (groupId != null) {
             db.collection("groups").document(groupId).get()
                     .addOnSuccessListener(doc -> {
@@ -80,9 +90,7 @@ public class GroupDetailsActivity extends AppCompatActivity {
         }
 
         manageMembersButton.setOnClickListener(v -> showManageMembersDialog());
-
         quitGroupButton.setOnClickListener(v -> showQuitConfirmDialog());
-
         loadGroupPosts();
     }
 
