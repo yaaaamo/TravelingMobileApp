@@ -2,6 +2,7 @@ package com.example.traveling;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,14 +69,14 @@ public class Groups extends Fragment {
                 .setTitle("Create Group")
                 .setView(dialogView)
                 .setPositiveButton("Create", (dialog, which) -> {
-                    String name        = nameInput.getText().toString().trim();
+                    String name = nameInput.getText().toString().trim();
                     String description = descriptionInput.getText().toString().trim();
 
                     if (name.isEmpty()) return;
 
                     if (auth.getCurrentUser() == null) return;
 
-                    String userId    = auth.getCurrentUser().getUid();
+                    String userId = auth.getCurrentUser().getUid();
                     String username = auth.getCurrentUser().getDisplayName();
                     String timestamp = String.valueOf(System.currentTimeMillis());
 
@@ -87,23 +88,31 @@ public class Groups extends Fragment {
                             .addOnSuccessListener(ref -> {
                                 String newGroupId = ref.getId();
 
-                                db.collection("groups")
-                                        .document(newGroupId)
-                                        .collection("Members")
-                                        .document(userId)
-                                        .set(new java.util.HashMap<>());
+                                // fetch username before saving member
+                                db.collection("Users").document(userId).get()
+                                        .addOnSuccessListener(userDoc -> {
+                                            String userID = userDoc.getString("fullname");
+                                            Log.d("Groups", " We found the name related to this userId to be "+ userID);
 
+                                            HashMap<String, Object> memberData = new HashMap<>();
+                                            memberData.put("username", userID);
 
-                                Map<String, Object> data = new HashMap<>();
-                                data.put("groupIds", FieldValue.arrayUnion(newGroupId));
-                                db.collection("Users").document(userId)
-                                        .set(data, SetOptions.merge());
+                                            db.collection("groups")
+                                                    .document(newGroupId)
+                                                    .collection("Members")
+                                                    .document(userId)
+                                                    .set(memberData); // now has username
+
+                                            // also store groupId in user doc
+                                            Map<String, Object> data = new HashMap<>();
+                                            data.put("groupIds", FieldValue.arrayUnion(newGroupId));
+                                            db.collection("Users").document(userId)
+                                                    .set(data, SetOptions.merge());
+                                        });
                             });
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
+                }).show();
 
+    }
     private void loadGroups() {
         if (auth.getCurrentUser() == null) return;
         String currentUserId = auth.getCurrentUser().getUid();

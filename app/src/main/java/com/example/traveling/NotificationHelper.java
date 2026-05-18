@@ -57,4 +57,35 @@ public class NotificationHelper {
                 .collection("notifications")
                 .add(notification);
     }
+    public static void sendNewPostNotification(String followerId,
+                                               String fromUsername,
+                                               String postId) {
+        if (followerId == null || fromUsername == null) return;
+
+        String message = fromUsername + " shared a new post";
+        ModelNotification notification = new ModelNotification(
+                "new_post", message, postId, null,
+                String.valueOf(System.currentTimeMillis()));
+
+        db.collection("Users")
+                .document(followerId)
+                .collection("notifications")
+                .add(notification);
+    }
+    public static void sendFollowNotification(String targetUserId,
+                                              String fromUsername) {
+        if (targetUserId == null || fromUsername == null) return;
+
+        String message = fromUsername + " started following you";
+        ModelNotification notification = new ModelNotification(
+                "follow", message, null, null,
+                String.valueOf(System.currentTimeMillis()));
+
+        db.collection("Users")
+                .document(targetUserId)
+                .collection("notifications")
+                .add(notification);
+    }
+
+
 }

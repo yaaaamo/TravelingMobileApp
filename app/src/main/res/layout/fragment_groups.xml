@@ -9,7 +9,8 @@
         android:id="@+id/createGroupButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="+ Create Group"/>
+        android:text="+ Create Group"
+        android:backgroundTint="@color/mainpink"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/groupsRecyclerView"

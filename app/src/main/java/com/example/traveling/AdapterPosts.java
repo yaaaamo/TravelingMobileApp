@@ -105,6 +105,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.PostViewHold
             intent.putExtra("lat", post.getLat());
             intent.putExtra("lng", post.getLng());
             intent.putExtra("googlePlaceId", post.getGooglePlaceId());
+            intent.putExtra("groupId", post.getGroupid());
 
 
             holder.itemView.getContext().startActivity(intent);        });

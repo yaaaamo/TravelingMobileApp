@@ -88,7 +88,7 @@ public class GroupDetailsActivity extends AppCompatActivity {
         if (groupId == null) return;
 
         db.collection("posts")
-                .whereEqualTo("groupId", groupId)
+                .whereEqualTo("groupid", groupId)
                 .addSnapshotListener((value, error) -> {
                     if (value == null) return;
 
@@ -116,7 +116,7 @@ public class GroupDetailsActivity extends AppCompatActivity {
                     List<String> emails = new ArrayList<>();
 
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        String email = doc.getString("email");
+                        String email = doc.getString("username");
                         if (email != null && !email.trim().isEmpty()) {
                             emails.add(email);
                         }
@@ -141,14 +141,14 @@ public class GroupDetailsActivity extends AppCompatActivity {
                         String emailInput = addMemberInput.getText().toString().trim().toLowerCase();
 
                         if (emailInput.isEmpty()) {
-                            Toast.makeText(this, "Enter an email", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "Enter username", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
                         addMemberButton.setEnabled(false);
 
                         db.collection("Users")
-                                .whereEqualTo("email", emailInput)
+                                .whereEqualTo("fullname", emailInput)
                                 .limit(1)
                                 .get()
                                 .addOnSuccessListener(userSnapshot -> {
@@ -162,7 +162,7 @@ public class GroupDetailsActivity extends AppCompatActivity {
 
                                     DocumentSnapshot userDoc = userSnapshot.getDocuments().get(0);
                                     String newMemberId = userDoc.getId();
-                                    String fetchedEmail = userDoc.getString("email");
+                                    String fetchedEmail = userDoc.getString("fullname");
 
                                     final String userEmail;
                                     if (fetchedEmail == null || fetchedEmail.trim().isEmpty()) {

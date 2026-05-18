@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,6 +34,8 @@ public class PostDetailsActivity extends AppCompatActivity {
     TextView captionView, username, location, country,
             tags, travelType, likes, comments, date;
     ImageButton likeButton;
+    LinearLayout groupLayout;
+    TextView groupName;
 
     // ← these now live here, not in an adapter
     private FirebaseFirestore db;
@@ -60,6 +63,8 @@ public class PostDetailsActivity extends AppCompatActivity {
         comments     = findViewById(R.id.comments);
         date         = findViewById(R.id.date);
         likeButton   = findViewById(R.id.likeButton);
+        groupLayout = findViewById(R.id.groupLayout);
+        groupName = findViewById(R.id.groupName);
         EditText commentInput       = findViewById(R.id.commentInput);
         Button submitCommentButton  = findViewById(R.id.submitCommentButton);
         RecyclerView commentsRV     = findViewById(R.id.commentsRecyclerView);
@@ -110,6 +115,23 @@ public class PostDetailsActivity extends AppCompatActivity {
         double lat            = getIntent().getDoubleExtra("lat", 0);
         double lng            = getIntent().getDoubleExtra("lng", 0);
         String googlePlaceId  = getIntent().getStringExtra("googlePlaceId");
+        String groupId = getIntent().getStringExtra("groupId");
+        if (groupId != null && !groupId.isEmpty()) {
+
+            db.collection("groups")
+                    .document(groupId)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+
+                        if (documentSnapshot.exists()) {
+
+                            String groupTitle = documentSnapshot.getString("name");
+
+                            groupLayout.setVisibility(View.VISIBLE);
+                            groupName.setText("Posted in " + groupTitle);
+                        }
+                    });
+        }
 
 // bind and wire directions button
         Button directionsButton = findViewById(R.id.coordinates);

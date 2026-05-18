@@ -241,36 +241,48 @@ private String foundPlaceId = null;
     }
 
     private void loadGroups() {
-        db.collection("groups").get().addOnSuccessListener(snapshot -> {
-            groupNames.clear();
-            groupIds.clear();
+        if (auth.getCurrentUser() == null) return;
+        String userId = auth.getCurrentUser().getUid();
 
-            for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                String name = doc.getString("name");
-                if (name != null) {
-                    groupNames.add(name);
-                    groupIds.add(doc.getId());
-                }
-            }
+        db.collection("Users").document(userId).get()
+                .addOnSuccessListener(userDoc -> {
+                    List<String> ids = (List<String>) userDoc.get("groupIds");
+                    if (ids == null || ids.isEmpty()) return;
 
-            ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-                    requireContext(),
-                    android.R.layout.simple_spinner_item,
-                    groupNames);
-            spinnerAdapter.setDropDownViewResource(
-                    android.R.layout.simple_spinner_dropdown_item);
-            groupSpinner.setAdapter(spinnerAdapter);
+                    List<String> safeIds = ids.size() > 10 ? ids.subList(0, 10) : ids;
 
-            // if opened from a group page, pre-select that group in the radio + spinner
-            if (preselectedGroupId != null) {
-                postTargetGroup.check(R.id.radioGroup);
-                groupSpinner.setVisibility(View.VISIBLE);
-                int index = groupIds.indexOf(preselectedGroupId);
-                if (index >= 0) groupSpinner.setSelection(index);
-            }
-        });
+                    db.collection("groups")
+                            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), safeIds)
+                            .get()
+                            .addOnSuccessListener(snapshot -> {
+                                groupNames.clear();
+                                groupIds.clear();
+
+                                for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                                    String name = doc.getString("name");
+                                    if (name != null) {
+                                        groupNames.add(name);
+                                        groupIds.add(doc.getId());
+                                    }
+                                }
+
+                                ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
+                                        requireContext(),
+                                        android.R.layout.simple_spinner_item,
+                                        groupNames);
+                                spinnerAdapter.setDropDownViewResource(
+                                        android.R.layout.simple_spinner_dropdown_item);
+                                groupSpinner.setAdapter(spinnerAdapter);
+
+                                if (preselectedGroupId != null) {
+                                    postTargetGroup.check(R.id.radioGroup);
+                                    groupSpinner.setVisibility(View.VISIBLE);
+                                    int index = groupIds.indexOf(preselectedGroupId);
+                                    if (index >= 0) groupSpinner.setSelection(index);
+                                }
+                            });
+                });
     }
-
     private void savePostToFirestore(String imageUrl, String caption, String location,
                                      String country, String tags, String travelType,
                                      String groupId) {
@@ -301,6 +313,7 @@ private String foundPlaceId = null;
                     db.collection("posts")
                             .add(post)
                             .addOnSuccessListener(ref -> {
+                                FollowHelper.notifyFollowersOfNewPost(userId, username, ref.getId());
                                 Toast.makeText(getContext(),
                                         "Posted!", Toast.LENGTH_SHORT).show();
                                 uploadBtn.setEnabled(true);
