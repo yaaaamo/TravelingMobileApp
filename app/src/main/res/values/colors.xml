@@ -4,4 +4,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="mainpink">#CC7E85</color>
     <color name="brown">#563635</color>
+    <color name="background_page">#FFF8F8</color>
 </resources>

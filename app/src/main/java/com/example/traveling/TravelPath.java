@@ -7,13 +7,12 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,15 +43,16 @@ public class TravelPath extends Fragment {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
 
         CheckBox checkRestauration = view.findViewById(R.id.check_restauration);
-        CheckBox checkLoisirs = view.findViewById(R.id.check_loisirs);
+        CheckBox checkLoisirs     = view.findViewById(R.id.check_loisirs);
         CheckBox checkDecouvertes = view.findViewById(R.id.check_decouvertes);
-        CheckBox checkCulture = view.findViewById(R.id.check_culture);
+        CheckBox checkCulture     = view.findViewById(R.id.check_culture);
 
-        EditText editPlaces = view.findViewById(R.id.edit_places);
-        EditText editBudget = view.findViewById(R.id.edit_budget);
+        EditText editPlaces   = view.findViewById(R.id.edit_places);
+        EditText editBudget   = view.findViewById(R.id.edit_budget);
         EditText editDuration = view.findViewById(R.id.edit_duration);
 
-        Spinner spinnerEffort = view.findViewById(R.id.spinner_effort);
+        RadioGroup radioEffort = view.findViewById(R.id.radio_effort);
+        ((RadioButton) view.findViewById(R.id.radio_effort_medium)).setChecked(true);
 
         CheckBox checkCold = view.findViewById(R.id.check_cold);
         CheckBox checkHeat = view.findViewById(R.id.check_heat);
@@ -60,28 +60,19 @@ public class TravelPath extends Fragment {
 
         Button btnSave = view.findViewById(R.id.btn_save_preferences);
 
-        textEco = view.findViewById(R.id.text_option_eco);
+        textEco      = view.findViewById(R.id.text_option_eco);
         textBalanced = view.findViewById(R.id.text_option_balanced);
-        textComfort = view.findViewById(R.id.text_option_comfort);
-        progressBar = view.findViewById(R.id.progress_bar);
+        textComfort  = view.findViewById(R.id.text_option_comfort);
+        progressBar  = view.findViewById(R.id.progress_bar);
 
         viewModel = new ViewModelProvider(requireActivity()).get(TravelPathViewModel.class);
-
-        String[] efforts = {"Faible", "Moyen", "Élevé"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item, efforts);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerEffort.setAdapter(adapter);
 
         viewModel.getRouteOptions().observe(getViewLifecycleOwner(), options -> {
             if (options == null || options.isEmpty()) {
                 Toast.makeText(requireContext(),
-                        "Aucune option trouvée.",
-                        Toast.LENGTH_SHORT).show();
+                        "Aucune option trouvée.", Toast.LENGTH_SHORT).show();
                 return;
             }
-
             if (!hasNavigated && isVisible()) {
                 hasNavigated = true;
                 requireActivity().getSupportFragmentManager()
@@ -90,43 +81,44 @@ public class TravelPath extends Fragment {
                         .addToBackStack(null)
                         .commit();
             }
-
         });
 
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
-            if (error != null) {
+            if (error != null)
                 Toast.makeText(requireContext(), "Erreur: " + error, Toast.LENGTH_LONG).show();
-            }
         });
 
-        viewModel.getLoading().observe(getViewLifecycleOwner(), isLoading -> {
-            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-        });
+        viewModel.getLoading().observe(getViewLifecycleOwner(), isLoading ->
+                progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE));
 
         btnSave.setOnClickListener(v -> {
             hasNavigated = false;
-            String budgetText = editBudget.getText().toString().trim();
+
+            String budgetText   = editBudget.getText().toString().trim();
             String durationText = editDuration.getText().toString().trim();
 
             if (TextUtils.isEmpty(budgetText) || TextUtils.isEmpty(durationText)) {
                 Toast.makeText(requireContext(),
-                        "Veuillez remplir le budget et la durée.",
-                        Toast.LENGTH_SHORT).show();
+                        "Veuillez remplir le budget et la durée.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             UserPreferences prefs = new UserPreferences();
-            prefs.restauration = checkRestauration.isChecked();
-            prefs.loisirs = checkLoisirs.isChecked();
-            prefs.decouvertes = checkDecouvertes.isChecked();
-            prefs.culture = checkCulture.isChecked();
-            prefs.favoritePlaces = editPlaces.getText().toString().trim();
-            prefs.maxBudget = Double.parseDouble(budgetText);
-            prefs.duration = durationText;
-            prefs.effort = spinnerEffort.getSelectedItem().toString();
-            prefs.cold = checkCold.isChecked();
-            prefs.heat = checkHeat.isChecked();
-            prefs.rain = checkRain.isChecked();
+            prefs.restauration    = checkRestauration.isChecked();
+            prefs.loisirs         = checkLoisirs.isChecked();
+            prefs.decouvertes     = checkDecouvertes.isChecked();
+            prefs.culture         = checkCulture.isChecked();
+            prefs.favoritePlaces  = editPlaces.getText().toString().trim();
+            prefs.maxBudget       = Double.parseDouble(budgetText);
+            prefs.duration        = durationText;
+            prefs.cold            = checkCold.isChecked();
+            prefs.heat            = checkHeat.isChecked();
+            prefs.rain            = checkRain.isChecked();
+
+            int checkedId = radioEffort.getCheckedRadioButtonId();
+            if (checkedId == R.id.radio_effort_low)       prefs.effort = "Faible";
+            else if (checkedId == R.id.radio_effort_high) prefs.effort = "Élevé";
+            else                                           prefs.effort = "Moyen";
 
             fetchLocationAndGenerate(prefs);
         });
