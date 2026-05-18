@@ -15,6 +15,7 @@ import android.widget.SearchView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -109,7 +110,7 @@ public class Home extends Fragment {
                      db.collection("posts")
                              .whereEqualTo("groupid", null)
                              .addSnapshotListener((value, error) -> {
-                                 if (error != null) { Log.e("FIREBASE", error.getMessage()); return; }
+                                 if (error != null) { Log.e("FIREBASE", error.getMessage()); FirebaseCrashlytics.getInstance().recordException(error);return; }
                                  if (value == null) return;
 
                                  postList.clear();

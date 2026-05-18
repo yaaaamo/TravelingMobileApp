@@ -16,6 +16,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
@@ -43,7 +44,12 @@ public class LoginActivity extends AppCompatActivity {
                                 analytics.setUserId(user.getUid());
                             }
 
+                            FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
+                            crashlytics.setUserId(user.getUid());
+                            crashlytics.setCustomKey("login_method", "email");
+
                             startActivity(new Intent(this, MainActivity.class));
+
                             finish();
                         } else {
                             Toast.makeText(this, "Auth failed", Toast.LENGTH_SHORT).show();
